@@ -1,5 +1,32 @@
 #!/usr/bin/bash
 
+
+if ! OPTIONS=$(getopt -o ac --long clean,autocompile -- "$@"); then
+  exit 1
+fi
+
+eval set -- "$OPTIONS"
+
+while true; do
+  case "$1" in
+    -a|--autocompile)
+      autocompile=true
+      shift
+      ;;
+    -c|--clean)
+      clean=true
+      shift
+      ;;
+    --) # End of options
+      shift
+      break
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
 IMAGE_NAME=processamento-imagens:latest
 
 build_if_not_exists() {
@@ -11,18 +38,19 @@ build_if_not_exists() {
     fi
 }
 run_docker()        { docker run --rm -v "$(pwd):/data" -w /data $IMAGE_NAME "${@}";}
-run_pdf_latex()     { run_docker pdflatex "${@}" main.tex ;}
-remove_aux_files()  { run_docker latexmk -c;}
+remove_aux_files()  { run_docker latexmk -aux-directory=.tmp -c;}
+run_latexmk()       { run_docker latexmk -aux-directory=.tmp -pdflua "${@}" main.tex;}
 count_on_log()      { grep --ignore-case --count --perl-regexp --regexp="$1" "${@:2}" main.log ;}
 
 build_if_not_exists $IMAGE_NAME texlive
 
-run_pdf_latex -draftmode
-run_pdf_latex
-
-NOT_ERROR_TEXT=$(count_on_log "Providing info/warning/error messages")
-CONTAINS_ERROR_WARNING=$(count_on_log "error|warning")
-
-if ! [[ CONTAINS_ERROR_WARNING -gt NOT_ERROR_TEXT ]]; then
+if [[ $clean == true ]]; then
     remove_aux_files
+    exit 0 
+fi
+
+if [[ $autocompile == true ]]; then
+    run_latexmk -pvc
+else
+    run_latexmk
 fi

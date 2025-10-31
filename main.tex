@@ -1,19 +1,43 @@
 \documentclass{article}
+\usepackage[utf8]{inputenc}
 \usepackage{graphicx} % Required for inserting images
-\usepackage{float} % Allows use of [H] float placement
+\usepackage{float}  % Allows use of [H] float placement
 \usepackage[brazilian]{babel}   %   pt-br
-\usepackage{booktabs} % For \toprule, \midrule, \bottomrule, \addlinespace
-\usepackage[left=3cm,right=3cm]{geometry} % Increase horizontal margins
-\usepackage{tabularx} % For automatic column wrapping to text width
-\usepackage{hyperref} % For \url and hyperlinks
 \usepackage{bookmark}
-\hypersetup{hidelinks} % Remove colored boxes around links
+\usepackage{booktabs}   % For \toprule, \midrule, \bottomrule, \addlinespace
+\usepackage[left=3cm,right=3cm]{geometry} % Increase horizontal margins
+\usepackage{tabularx}   % For automatic column wrapping to text width
+\usepackage{hyperref}   % For \url and hyperlinks
+
+%% Pretty code
+\usepackage{listings}   % For adding text files
+\usepackage{matlab-prettifier}
+
+% Define custom colors
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolor}{rgb}{0.95,0.95,0.92}
+
+
+% \lstset{style=Matlab-bw} %% Melhor para imprimir
+\lstset{style=Matlab-editor} %% Melhor para ver no pdf
+
+\hypersetup{hidelinks}  % Remove colored boxes around links
 
 \usepackage[nottoc,numbib]{tocbibind} % For making the bibliography appear in the table of contents
 
 \title{\textbf{Processamento de imagens}}
-\author{... \and Matheus Machado Cezar \and ...}
-\date{}
+\author{
+    Enzo Borges Segala \and
+    Jonathan Gabriel Nunes Mendes \and
+    Matheus Machado Cezar \and
+    Marcos Henrique Volpato de Moraes \and
+    Miguel Predebon Abichequer \and
+    Nicolas Rosenthal Dal Corso \and
+    Rafael Silveira Bandeira
+}
+\date{11/11/2025}
 
 \begin{document}
 
@@ -24,8 +48,29 @@
 \newpage
 
 \section{Introdução}
-
 ...
+
+\section{Tarefas}
+
+\subsection{Interpolação em imagens coloridas}
+\lstinputlisting[language=MATLAB]{q1.m}
+
+
+\subsection{Realce de imagens no domínio espacial (da imagem)}
+\lstinputlisting[language=MATLAB]{q2.m}
+
+
+\subsection{Filtragem espacial}
+\lstinputlisting[language=MATLAB]{q3.m}
+
+
+\subsection{Dithering}
+\lstinputlisting[language=MATLAB]{q4.m}
+
+
+\subsection{Operacoes Geométricas}
+\lstinputlisting[language=MATLAB]{q5.m}
+
 
 \end{document}
 

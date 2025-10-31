@@ -1,0 +1,1 @@
+%% Filtragem espacial
