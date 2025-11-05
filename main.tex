@@ -8,6 +8,12 @@
 \usepackage[left=3cm,right=3cm]{geometry} % Increase horizontal margins
 \usepackage{tabularx}   % For automatic column wrapping to text width
 \usepackage{hyperref}   % For \url and hyperlinks
+\usepackage[nottoc,numbib]{tocbibind} % For making the bibliography appear in the table of contents
+\usepackage{titlesec} % For paragraph to behave like sub-sub-sub-section
+
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
 
 %% Pretty code
 \usepackage{listings}   % For adding text files
@@ -20,12 +26,36 @@
 \definecolor{backcolor}{rgb}{0.95,0.95,0.92}
 
 
+\newcommand{\twofigures}[6]{
+\begin{figure}[H]
+\centering
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=.9\linewidth]{#1}
+  \label{fig:#2}
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=.9\linewidth]{#3}
+  \label{fig:#4}
+\end{subfigure}
+\caption{#5}
+\label{fig:#6}
+\end{figure}
+}
+
 % \lstset{style=Matlab-bw} %% Melhor para imprimir
 \lstset{style=Matlab-editor} %% Melhor para ver no pdf
 
 \hypersetup{hidelinks}  % Remove colored boxes around links
 
-\usepackage[nottoc,numbib]{tocbibind} % For making the bibliography appear in the table of contents
+% For paragraph to behave like sub-sub-sub-section
+\setcounter{secnumdepth}{4}
+
+\titleformat{\paragraph}
+{\normalfont\normalsize\bfseries}{\theparagraph}{1em}{}
+\titlespacing*{\paragraph}
+{0pt}{3.25ex plus 1ex minus .2ex}{1.5ex plus .2ex}
 
 \title{\textbf{Processamento de imagens}}
 \author{
@@ -54,34 +84,105 @@
 
 \subsection{Interpolação em imagens coloridas}
 \subsubsection{Arquivo principal}
-\lstinputlisting[language=MATLAB]{q1.m}
+\begin{minipage}{\linewidth}
+    \lstinputlisting[language=MATLAB]{q1/q1.m}
+\end{minipage}
 
 \subsubsection{Funções auxiliares}
-\lstinputlisting[language=MATLAB]{mfunctions/bicubic_channel.m}
-\lstinputlisting[language=MATLAB]{mfunctions/bicubic_interpolate.m}
-\lstinputlisting[language=MATLAB]{mfunctions/bicubic_resize.m}
-\lstinputlisting[language=MATLAB]{mfunctions/bilinear_resize.m}
-\lstinputlisting[language=MATLAB]{mfunctions/nearest_neighbour_resize.m}
-
+\begin{minipage}{\linewidth}
+    \lstinputlisting[language=MATLAB]{q1/bicubic_channel.m}
+\end{minipage}
+\begin{minipage}{\linewidth}
+    \lstinputlisting[language=MATLAB]{q1/bicubic_interpolate.m}
+\end{minipage}
+\begin{minipage}{\linewidth}
+    \lstinputlisting[language=MATLAB]{q1/bicubic_resize.m}
+\end{minipage}
+\begin{minipage}{\linewidth}
+    \lstinputlisting[language=MATLAB]{q1/bilinear_resize.m}
+\end{minipage}
+\begin{minipage}{\linewidth}
+    \lstinputlisting[language=MATLAB]{q1/nearest_neighbour_resize.m}
+\end{minipage}
 
 \subsection{Realce de imagens no domínio espacial (da imagem)}
 \subsubsection{Arquivo principal}
-\lstinputlisting[language=MATLAB]{q2.m}
+\begin{minipage}{\linewidth}
+    \lstinputlisting[language=MATLAB]{q2/q2.m}
+\end{minipage}
 
 
 \subsection{Filtragem espacial}
-\subsubsection{Arquivo principal}
-\lstinputlisting[language=MATLAB]{q3.m}
+\subsubsection{Arquivos principais}
+\paragraph{Ruídos Salt \& Pepper e Gaussian}
+
+% Imagens Originais
+\twofigures{q3/raposa.jpg}{raposa}{q3/borboleta.jpg}{borboleta}{Imagens originais}{q3_original}
+
+\paragraph*{Adição de Ruídos}
+Para iniciar esta etapa, deve-se inserir diferentes níveis de ruído sal e pimenta (salt and pepper) e ruído Gaussiano simultaneamente nas imagens selecionadas: “raposa.jpg” e “borboleta.jpg”. Para isso, utiliza-se a função imnoise, responsável por contaminar a imagem com ambos os tipos de ruídos.
+
+\begin{minipage}{\linewidth}
+    \lstinputlisting[language=MATLAB]{q3/adicao_de_ruido.m}
+\end{minipage}
+
+Como resultado, temos as imagens originais contaminadas com ruído Gaussiano de variância 0.01 e com ruído salt \& pepper de densidade 0.05.
+
+\twofigures{q3/.out/raposa_ruido.png}{raposa_ruido}{q3/.out/borboleta_ruido.png}{borboleta_ruido}{Imagens com ruído}{q3_ruido}
+
+\paragraph*{Filtragem Alpha Trimmed Mean}
+Em seguida, as imagens passam pelo filtro Alpha Trimmed Mean. Para isso, foi desenvolvida a função alpha\_trimmed\_mean\_filter 3x3, que aplica o filtro aos três canais de cor: vermelho, verde e azul, e, posteriormente, os resultados são combinados novamente para gerar a imagem final com os ruídos atenuados.
+
+\begin{minipage}{\linewidth}
+    \lstinputlisting[language=MATLAB]{q3/alpha_trimmed_mean_filter.m}
+\end{minipage}
+
+\twofigures{q3/.out/raposa_filtered.png}{raposa_filtered}{q3/.out/borboleta_filtered.png}{borboleta_filtered}{Imagens filtradas}{q3_filtered}
+
+\paragraph*{Medições PSNR e SNR}
+A avaliação da qualidade da filtragem é feita utilizando os parâmetros SNR (Signal-to-Noise Ratio) e PSNR (Peak Signal-to-Noise Ratio), por meio de suas respectivas funções. Como esses indicadores medem a relação entre o sinal original e o ruído, valores mais altos de SNR ou PSNR correspondem a menor presença de ruído, indicando melhor qualidade da imagem.
+
+\begin{minipage}{\linewidth}
+    \lstinputlisting[language=MATLAB]{q3/maina.m}
+\end{minipage}
+
+\begin{center}
+\begin{tabular}{ c c c }
+                  & Borboleta& Raposa  \\
+    Filtrada PSNR & 26.16 dB & 24.87 dB \\
+    Filtrada SNR  & 19.84 dB & 19.14 dB \\
+    Ruidosa PSNR  & 16.26 dB & 16.58 dB \\
+    Ruidosa SNR   & 10.25 dB & 11.14 dB  \\
+\end{tabular}
+\end{center}
+
+
+\paragraph{Unsharp Masking}
+
+Ao aplicar este filtro, os detalhes da imagem original são realçados sem a introdução de ruído. Inicialmente, a imagem é suavizada por meio de convoluções Gaussianas, que funcionam como filtros passa-baixa, removendo componentes de alta frequência, como texturas finas e bordas. Em seguida, a imagem suavizada é subtraída da original, e os detalhes resultantes são ampliados através da multiplicação por um fator de ganho “amount”. Por fim, esse resultado é somado à imagem original, proporcionando o realce final de detalhes e contornos.
+
+OBS.:  2 parâmetros no código:
+Sigma: Define o grau de suavização na máscara Gaussiana;
+Fator de ganho(amount): Define quanto os detalhes serão amplificados;
+
+\begin{minipage}{\linewidth}
+    \lstinputlisting[language=MATLAB]{q3/mainb.m}
+\end{minipage}
+
 
 
 \subsection{Dithering}
 \subsubsection{Arquivo principal}
-\lstinputlisting[language=MATLAB]{q4.m}
+\begin{minipage}{\linewidth}
+    \lstinputlisting[language=MATLAB]{q4/q4.m}
+\end{minipage}
 
 
 \subsection{Operacoes Geométricas}
 \subsubsection{Arquivo principal}
-\lstinputlisting[language=MATLAB]{q5.m}
+\begin{minipage}{\linewidth}
+    \lstinputlisting[language=MATLAB]{q5/q5.m}
+\end{minipage}
 
 
 \end{document}

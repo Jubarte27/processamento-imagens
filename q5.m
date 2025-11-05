@@ -1,1 +1,0 @@
-%% Operacoes Geométricas
