@@ -1,6 +1,8 @@
 imgs = {'borboleta.jpg', 'raposa.jpg'};
-for i = 1:2
-    img_original = imread(imgs{i});
+for i = 1:length(imgs)
+    name = imgs{i};
+    base_name = strrep(name, '.jpg', '');
+    img_original = imread(name);
 
     img_noisy = imnoise(img_original, 'salt & pepper', 0.05); % 5% de ruído
     img_noisy = imnoise(img_noisy, 'gaussian', 0, 0.01); % média 0, var 0.01
@@ -10,8 +12,7 @@ for i = 1:2
         imshow(img_filtered);
     else
         mkdir('.out');
-        name = imgs{i};
-        imwrite(img_filtered, strcat('.out/', name(1:length(name) - 4), '_filtered.png'));
+        imwrite(img_filtered, strcat('.out/', base_name, '_filtered.png'));
     end
 
     [SNR_filtered, PSNR_filtered, SNR_noisy, PSNR_noisy] = psnr_snr(img_original, img_filtered, img_noisy);

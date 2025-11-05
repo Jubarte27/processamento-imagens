@@ -14,6 +14,8 @@
 \usepackage{float}
 \usepackage{caption}
 \usepackage{subcaption}
+\usepackage{xparse}
+\usepackage{calc}
 
 %% Pretty code
 \usepackage{listings}   % For adding text files
@@ -43,6 +45,37 @@
 \label{fig:#6}
 \end{figure}
 }
+
+
+\ExplSyntaxOn
+\clist_new:N \l_figures_names
+\newcommand{\figurescompare}[8]{
+    \clist_set:Nn \l_figures_names {#1}
+    \begin{figure}[H]
+        \centering
+        \begin{subcaptionblock}{.5\textwidth-.5em}
+            \centering
+            \clist_map_inline:Nn \l_figures_names {
+                \includegraphics[width=1\linewidth]{#2##1.jpg}
+                \vskip .5em
+            }
+            \caption{#5}
+        \end{subcaptionblock}%
+        \hskip .5em
+        \begin{subcaptionblock}{.5\textwidth-.5em}
+            \centering
+            \clist_map_inline:Nn \l_figures_names {
+                \includegraphics[width=1\linewidth]{#3##1#4.png}
+                \vskip .5em
+            }
+            \caption{#6}
+        \end{subcaptionblock}%
+        \caption{#7}
+        \label{fig:#8}
+    \end{figure}
+}
+
+\ExplSyntaxOff
 
 % \lstset{style=Matlab-bw} %% Melhor para imprimir
 \lstset{style=Matlab-editor} %% Melhor para ver no pdf
@@ -166,10 +199,22 @@ Sigma: Define o grau de suavização na máscara Gaussiana;
 Fator de ganho(amount): Define quanto os detalhes serão amplificados;
 
 \begin{minipage}{\linewidth}
+    \paragraph*{Código}
     \lstinputlisting[language=MATLAB]{q3/mainb.m}
 \end{minipage}
 
+\paragraph*{Comparações}
+Processando as imagens com sigma = 2.5 e amount = 0.5. Apesar do valor relativamente alto de sigma, as alterações não são muito evidentes devido ao baixo valor de amount. Ainda assim, é possível notar que os detalhes maiores, como os detalhes das asas e o pelo, apresentam maior definição e nitidez.
 
+\figurescompare{borboleta,raposa}{q3/}{q3/.out/}{_25_05_unsharp}{Original}{Com Unsharp Masking}{sigma=2.5 e amount=0.5}{q3_25_05_unsharp}
+
+Processando as imagens com sigma = 2.5 e amount = 2.5. Nesse caso, as alterações tornam-se mais evidentes, com as asas mais nítidas e menos borradas. Na raposa, a pelagem também apresentou maior definição. 
+
+\figurescompare{borboleta,raposa}{q3/}{q3/.out/}{_25_25_unsharp}{Original}{Com Unsharp Masking}{sigma=2.5 e amount=2.5}{q3_25_25_unsharp}
+
+Para avaliar as alterações geradas por diferentes valores de sigma, mantivemos amount = 2.5 para intensificar a máscara. No primeiro experimento, com sigma = 0.5, observa-se praticamente nada de mudança, somente um realce de pequenos detalhes.
+
+\figurescompare{borboleta,raposa}{q3/}{q3/.out/}{_05_25_unsharp}{Original}{Com Unsharp Masking}{sigma=0.5 e amount=2.5}{q3_05_25_unsharp}
 
 \subsection{Dithering}
 \subsubsection{Arquivo principal}
