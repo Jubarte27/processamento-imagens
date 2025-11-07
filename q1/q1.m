@@ -1,22 +1,42 @@
 %% Interpolação em imagens coloridas
+total = tic;
 
-addpath(genpath(strcat(pwd, '/mfunctions')));
+scale = 3;
+baseimgs = {'cameraman.tif'};
 
-scale = 1.8;
-baseimgs = {'peppers.png', 'onion.png'};
+algorithms = { ...
+    % 'Original'                        , @(a, b) a                ; ...
+    % 'Nearest Neighbor'                , @nearest_neighbour_resize; ...
+    % 'Nearest Neighbor - MATLAB'       , @(a, b) imresize(a, b, 'nearest'); ...
+    % 'Nearest Neighbor - MATLAB - Diff', @(a, b) imabsdiff(imresize(a, b, 'nearest'), nearest_neighbour_resize(a, b)); ...
+    'Bilinear'                        , @bilinear_resize         ; ...
+    'Bilinear - MATLAB'               , @(a, b) imresize(a, b, 'bilinear'); ...
+    'Bilinear - MATLAB - Diff'        , @(a, b) imabsdiff(imresize(a, b, 'bilinear'), bilinear_resize(a, b)); ...
+    % 'Bicubic'                         , @bicubic_resize          ; ...
+    % 'Bicubic - MATLAB'                , @(a, b) imresize(a, b, 'bicubic'); ...
+    % 'Bicubic - MATLAB - Diff'         , @(a, b) imabsdiff(imresize(a, b, 'bicubic'), bicubic_resize(a, b)); ...
+};
 
-imgs = cell(1, 8);
-names= cell(1, 8);
+image_count = length(baseimgs);
+runs_per_image = length(algorithms);
+total_runs = runs_per_image * length(baseimgs);
 
-for k = 1:2
-    original = im2double(imread(baseimgs{k}));
+names = repmat(algorithms(:,1), image_count, 1);
+f = repmat(algorithms(:,2), image_count, 1);
 
-    imgs(4*(k-1)+1:4*k) = { ...
-        original, ...
-        nearest_neighbour_resize(original, scale), ...
-        bilinear_resize(original, scale), ...
-        bicubic_resize(original, scale) };
-    names(4*(k-1)+1:4*k) = {'Original', 'Nearest Neighbor', 'Bilinear', 'Bicubic'};
+inimgs = reshape(repmat(baseimgs, runs_per_image, 1), 1, []); %% transpose
+outimgs = cell(1, total_runs);
+
+
+tic
+parfor i = 1:length(inimgs)
+    img = im2double(imread(inimgs{i}));
+
+    outimgs{i} = f{i}(img, scale);
 end
+fprintf('Agoritmos de Interpolação: ');
+toc
+imgs_in_docked_figures(outimgs, names);
 
-imgs_in_docked_figures(imgs, names)
+fprintf('Total: ');
+toc(total)
