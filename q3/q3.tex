@@ -1,0 +1,78 @@
+\documentclass[../main.tex]{subfiles}
+\usepackage{mainpreamble}
+
+\begin{document}
+
+\subsection{Filtragem espacial}
+\subsubsection{Arquivos principais}
+\paragraph{Ruídos Salt \& Pepper e Gaussian}
+
+% Imagens Originais
+\twofigures{raposa.jpg}{raposa}{borboleta.jpg}{borboleta}{Imagens originais}{q3_original}
+
+\paragraph*{Adição de Ruídos}
+Para iniciar esta etapa, deve-se inserir diferentes níveis de ruído sal e pimenta (salt and pepper) e ruído Gaussiano simultaneamente nas imagens selecionadas: “raposa.jpg” e “borboleta.jpg”. Para isso, utiliza-se a função imnoise, responsável por contaminar a imagem com ambos os tipos de ruídos.
+
+\begin{minipage}{\linewidth}
+    \lstinputlisting[language=MATLAB]{adicao_de_ruido.m}
+\end{minipage}
+
+Como resultado, temos as imagens originais contaminadas com ruído Gaussiano de variância 0.01 e com ruído salt \& pepper de densidade 0.05.
+
+\twofigures{.out/raposa_ruido.png}{raposa_ruido}{.out/borboleta_ruido.png}{borboleta_ruido}{Imagens com ruído}{q3_ruido}
+
+\paragraph*{Filtragem Alpha Trimmed Mean}
+Em seguida, as imagens passam pelo filtro Alpha Trimmed Mean. Para isso, foi desenvolvida a função alpha\_trimmed\_mean\_filter 3x3, que aplica o filtro aos três canais de cor: vermelho, verde e azul, e, posteriormente, os resultados são combinados novamente para gerar a imagem final com os ruídos atenuados.
+
+\begin{minipage}{\linewidth}
+    \lstinputlisting[language=MATLAB]{alpha_trimmed_mean_filter.m}
+\end{minipage}
+
+\twofigures{.out/raposa_filtered.png}{raposa_filtered}{.out/borboleta_filtered.png}{borboleta_filtered}{Imagens filtradas}{q3_filtered}
+
+\paragraph*{Medições PSNR e SNR}
+A avaliação da qualidade da filtragem é feita utilizando os parâmetros SNR (Signal-to-Noise Ratio) e PSNR (Peak Signal-to-Noise Ratio), por meio de suas respectivas funções. Como esses indicadores medem a relação entre o sinal original e o ruído, valores mais altos de SNR ou PSNR correspondem a menor presença de ruído, indicando melhor qualidade da imagem.
+
+\begin{minipage}{\linewidth}
+    \lstinputlisting[language=MATLAB]{maina.m}
+\end{minipage}
+
+\begin{center}
+\begin{tabular}{ c c c }
+                  & Borboleta& Raposa  \\
+    Filtrada PSNR & 26.16 dB & 24.87 dB \\
+    Filtrada SNR  & 19.84 dB & 19.14 dB \\
+    Ruidosa PSNR  & 16.26 dB & 16.58 dB \\
+    Ruidosa SNR   & 10.25 dB & 11.14 dB  \\
+\end{tabular}
+\end{center}
+
+
+\paragraph{Unsharp Masking}
+
+Ao aplicar este filtro, os detalhes da imagem original são realçados sem a introdução de ruído. Inicialmente, a imagem é suavizada por meio de convoluções Gaussianas, que funcionam como filtros passa-baixa, removendo componentes de alta frequência, como texturas finas e bordas. Em seguida, a imagem suavizada é subtraída da original, e os detalhes resultantes são ampliados através da multiplicação por um fator de ganho “amount”. Por fim, esse resultado é somado à imagem original, proporcionando o realce final de detalhes e contornos.
+
+OBS.:  2 parâmetros no código:
+Sigma: Define o grau de suavização na máscara Gaussiana;
+Fator de ganho(amount): Define quanto os detalhes serão amplificados;
+
+\begin{minipage}{\linewidth}
+    \paragraph*{Código}
+    \lstinputlisting[language=MATLAB]{mainb.m}
+\end{minipage}
+
+\paragraph*{Comparações}
+Processando as imagens com sigma = 2.5 e amount = 0.5. Apesar do valor relativamente alto de sigma, as alterações não são muito evidentes devido ao baixo valor de amount. Ainda assim, é possível notar que os detalhes maiores, como os detalhes das asas e o pelo, apresentam maior definição e nitidez.
+
+\figurescompare{borboleta,raposa}{}{.out/}{_25_05_unsharp}{Original}{Com Unsharp Masking}{sigma=2.5 e amount=0.5}{q3_25_05_unsharp}
+
+Processando as imagens com sigma = 2.5 e amount = 2.5. Nesse caso, as alterações tornam-se mais evidentes, com as asas mais nítidas e menos borradas. Na raposa, a pelagem também apresentou maior definição. 
+
+\figurescompare{borboleta,raposa}{}{.out/}{_25_25_unsharp}{Original}{Com Unsharp Masking}{sigma=2.5 e amount=2.5}{q3_25_25_unsharp}
+
+Para avaliar as alterações geradas por diferentes valores de sigma, mantivemos amount = 2.5 para intensificar a máscara. No primeiro experimento, com sigma = 0.5, observa-se praticamente nada de mudança, somente um realce de pequenos detalhes.
+
+\figurescompare{borboleta,raposa}{}{.out/}{_05_25_unsharp}{Original}{Com Unsharp Masking}{sigma=0.5 e amount=2.5}{q3_05_25_unsharp}
+
+
+\end{document}
