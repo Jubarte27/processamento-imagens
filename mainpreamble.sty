@@ -112,28 +112,28 @@
 \newlength{\secondimgwidth}
 \clist_new:N \l_figures_names_no_upscale
 \newcommand{\figurescomparenoupscale}[6]{
-    \clist_set:Nn \l_figures_names_no_upscale {#1}
-    \clist_map_inline:Nn \l_figures_names_no_upscale {
-        \settowidth{\firstimgwidth}{\includegraphics{.out/##1}}%
-        \settowidth{\secondimgwidth}{\includegraphics{.out/##1#2.png}}%
-        \begin{figure}[H]
-            \centering
-                \begin{subcaptionblock}{\firstimgwidth}
-                    \centering
-                    \scalegraphics{.out/##1.png}
-                    \caption{#3\ -\ ##1}
-                \end{subcaptionblock}%
-                \hskip .5em
-                \begin{subcaptionblock}{\minof{\textwidth-\firstimgwidth-.5em}{\secondimgwidth}}
-                    \centering
-                    \scalegraphics{.out/##1#2.png}
-                    \caption{#4\ -\ ##1}
-                \end{subcaptionblock}%
-            \caption{#5}
-            \label{fig:#6_##1}
-        \end{figure}
-        % \vskip .5em
-    }
+    \begin{figure}[H]
+        \centering
+        \clist_set:Nn \l_figures_names_no_upscale {#1}
+        \clist_map_inline:Nn \l_figures_names_no_upscale {
+            \settowidth{\firstimgwidth}{\includegraphics{.out/##1}}%
+            \settowidth{\secondimgwidth}{\includegraphics{.out/##1#2.png}}%
+            \begin{subcaptionblock}{\firstimgwidth}
+                \centering
+                \scalegraphics{.out/##1.png}
+                \caption{#3\ -\ ##1}
+            \end{subcaptionblock}%
+            \hskip .5em
+            \begin{subcaptionblock}{\minof{\textwidth-\firstimgwidth-.5em}{\secondimgwidth}}
+                \centering
+                \scalegraphics{.out/##1#2.png}
+                \caption{#4\ -\ ##1}
+            \end{subcaptionblock}%
+            \vskip 0em
+        }
+        \caption{#5}
+        \label{fig:#6}
+    \end{figure}
 }
 
 \ExplSyntaxOff
