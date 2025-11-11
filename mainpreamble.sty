@@ -31,6 +31,14 @@
 \definecolor{backcolor}{rgb}{0.95,0.95,0.92}
 
 
+\newlength{\imgwidth}
+\newcommand{\scalegraphics}[1]{%   
+    \settowidth{\imgwidth}{\includegraphics{#1}}%
+    \setlength{\imgwidth}{\minof{\imgwidth}{\linewidth}}%
+    \includegraphics[width=\imgwidth]{#1}%
+}
+
+
 \newcommand{\twofigures}[6]{
 \begin{figure}[H]
 \centering
@@ -52,36 +60,84 @@
 
 \ExplSyntaxOn
 \clist_new:N \l_figures_names
-\newcommand{\figurescompare}[8]{
+\newcommand{\figurescompare}[6]{
     \clist_set:Nn \l_figures_names {#1}
     \begin{figure}[H]
         \centering
         \begin{subcaptionblock}{.5\textwidth-.5em}
             \centering
             \clist_map_inline:Nn \l_figures_names {
-                \includegraphics[width=1\linewidth]{#2##1.jpg}
+                \includegraphics[width=1\linewidth]{.out/##1.png}
                 \vskip .5em
             }
-            \caption{#5}
+            \caption{#3}
         \end{subcaptionblock}%
         \hskip .5em
         \begin{subcaptionblock}{.5\textwidth-.5em}
             \centering
             \clist_map_inline:Nn \l_figures_names {
-                \includegraphics[width=1\linewidth]{#3##1#4.png}
+                \includegraphics[width=1\linewidth]{.out/##1#2.png}
                 \vskip .5em
             }
-            \caption{#6}
+            \caption{#4}
         \end{subcaptionblock}%
-        \caption{#7}
-        \label{fig:#8}
+        \caption{#5}
+        \label{fig:#6}
     \end{figure}
+}
+
+\newcommand{\twofiguresnoupscale}[6]{
+\begin{figure}[H]
+\centering
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \scalegraphics{#1}
+  \caption{#2}
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \scalegraphics{#3}
+  \caption{#4}
+\end{subfigure}
+\caption{#5}
+\label{fig:#6}
+\end{figure}
+}
+
+\newlength{\firstimgwidth}
+\newlength{\secondimgwidth}
+\clist_new:N \l_figures_names_no_upscale
+\newcommand{\figurescomparenoupscale}[6]{
+    \clist_set:Nn \l_figures_names_no_upscale {#1}
+    \clist_map_inline:Nn \l_figures_names_no_upscale {
+        \settowidth{\firstimgwidth}{\includegraphics{.out/##1}}%
+        \settowidth{\secondimgwidth}{\includegraphics{.out/##1#2.png}}%
+        \begin{figure}[H]
+            \centering
+                \begin{subcaptionblock}{\firstimgwidth}
+                    \centering
+                    \scalegraphics{.out/##1.png}
+                    \caption{#3\ -\ ##1}
+                \end{subcaptionblock}%
+                \hskip .5em
+                \begin{subcaptionblock}{\minof{\textwidth-\firstimgwidth-.5em}{\secondimgwidth}}
+                    \centering
+                    \scalegraphics{.out/##1#2.png}
+                    \caption{#4\ -\ ##1}
+                \end{subcaptionblock}%
+            \caption{#5}
+            \label{fig:#6_##1}
+        \end{figure}
+        % \vskip .5em
+    }
 }
 
 \ExplSyntaxOff
 
 % \lstset{style=Matlab-bw} %% Melhor para imprimir
 \lstset{style=Matlab-editor} %% Melhor para ver no pdf
+
+\lstset{language=matlab}
 
 \hypersetup{hidelinks}  % Remove colored boxes around links
 

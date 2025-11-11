@@ -4,22 +4,66 @@
 \begin{document}
 
 \subsection{Interpolação em imagens coloridas}
-\subsubsection{Arquivo principal}
+
 \begin{minipage}{\linewidth}
-    \lstinputlisting[language=MATLAB]{q1.m}
+    \lstinputlisting{q1.m}
 \end{minipage}
 
+\twofiguresnoupscale{.out/cat.png}{cat}{.out/hamster.png}{hamster}{Imagens originais}{q1_original}
 
+\paragraph*{Algoritmos}
+Foram escolhidos os algoritmos: Vizinho mais próximo (orderm 0), Bilinear (ordem 1) e Bicúbico (ordem 3)
+
+\subsubsection{Interpolação por vizinho mais próximo}
+Pode-se dizer que a principal vantagem deste algoritmo é a simplicidade da sua implementação e, por conta dela, chega ao resultado mais rápido. Contudo, seu resultado é uma imagem bastante pixelizada, o que torna inadequada a sua utilização em fotografias. Apesar disso, ainda é bastnte utilizada por artistas que trabalham com pixel art, já que neste estilo é desejado ver cada pixel.
+
+\figurescomparenoupscale{cat,hamster}{_nearest_neighbour}{Original}{Interpolado}{Vizinho mais Próximo}{q1_nearest_neighbour}
+\paragraph{Código}
 \begin{minipage}{\linewidth}
-    \lstinputlisting[language=MATLAB]{nearest_neighbour_resize.m}
+    \lstinputlisting{nearest_neighbour_resize.m}
+\end{minipage}
+
+\subsubsection{Bilinear}
+Este algoritmo suaviza as transições entre pixels, o que gera um resultado visual mais natural que o vizinho mais próximo. Contudo, pela simplicidade da interpolação, causa leve borramento e perda de nitidez.
+
+\figurescomparenoupscale{cat,hamster}{_bilinear}{Original}{Interpolado}{Bilinear}{q1_bilinear}
+\paragraph{Código}
+\begin{minipage}{\linewidth}
+    \lstinputlisting{bilinear_resize.m}
+\end{minipage}
+\begin{minipage}{\linewidth}
+    \lstinputlisting{lerp.m}
+\end{minipage}
+
+\subsubsection{Bicúbico}
+Dentre os 3 algoritmos estudados é o que produz melhor resultado, gerando imagens finais mais suaves e detalhadas. Ainda existe perda de nitidez, mas ela é mínima em comparação. É também um algoritmo mais complexo e mais lento que os demais, além de gerar pequenos artefatos em bordas com o contraste muito alto.
+
+\figurescomparenoupscale{cat,hamster}{_bicubic}{Original}{Interpolado}{Bicúbico}{q1_bicubic}
+\paragraph{Código}
+\begin{minipage}{\linewidth}
+    \lstinputlisting{bicubic_resize.m}
 \end{minipage}
 
 \subsubsection{Funções auxiliares}
 \begin{minipage}{\linewidth}
-    \lstinputlisting[language=MATLAB]{bicubic_resize.m}
+    \lstinputlisting{at_dim.m}
 \end{minipage}
 \begin{minipage}{\linewidth}
-    \lstinputlisting[language=MATLAB]{bilinear_resize.m}
+    \lstinputlisting{get_at_dim.m}
+\end{minipage}
+\begin{minipage}{\linewidth}
+    \lstinputlisting{set_at_dim.m}
+\end{minipage}
+
+\begin{minipage}{\linewidth}
+    \lstinputlisting{docked_figure.m}
+\end{minipage}
+\begin{minipage}{\linewidth}
+    \lstinputlisting{imgs_in_docked_figures.m}
+\end{minipage}
+
+\begin{minipage}{\linewidth}
+    \lstinputlisting{q1.m}
 \end{minipage}
 
 \end{document}

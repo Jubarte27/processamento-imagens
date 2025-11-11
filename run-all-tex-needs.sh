@@ -1,4 +1,8 @@
 #!/usr/bin/bash
 
-## Q3
-matlab -nodesktop -nojvm -nosplash -r "cd('q3'); warning('off', 'MATLAB:MKDIR:DirectoryExists'); run('adicao_de_ruido.m'); run('maina.m'); run('mainb.m'); quit;"
+## Q1
+matlab -nodesktop -nosplash -r "warning('off', 'MATLAB:MKDIR:DirectoryExists'); \
+cd('q1'); a = batch('tex;'); cd('..'); \
+cd('q3'); b = batch('tex;'); cd('..'); \
+wait(a); wait(b); \
+quit;"
