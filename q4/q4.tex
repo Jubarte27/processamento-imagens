@@ -3,10 +3,119 @@
 
 \begin{document}
 
-\subsection{Dithering}
-\subsubsection{Arquivo principal}
+\subsection{Dithering em imagens em tons de cinza}
+\paragraph*{Objetivo}
+Neste experimento, buscamos investigar o efeito dos algoritmos de *dithering* de Floyd-Steinberg e Bayer na redução de níveis de cinza em imagens digitais. As técnicas de dithering buscam preservar a aparência visual de uma imagem quando o número de tons disponíveis é reduzido, simulando gradações suaves por meio da distribuição controlada de pixels claros e escuros.
+
+\paragraph*{Metodologia}
+Foram testados os algoritmos Floyd-Steinberg e Bayer (dithering ordenado) sobre duas imagens em tons de cinza com 8 bits/pixel (256 níveis de cinza). A quantização foi realizada para 2 bits/pixel (4 níveis) e 3 bits/pixel (8 níveis), com o objetivo de comparar a naturalidade e qualidade visual obtidas por cada método, através do histograma das imagens resultantes, bem como usando as métricas de qualidade de imagens (PSNR e SSIM).
+
+\subsubsection{Conceitos Fundamentais}
+
+\paragraph*{Quantização}
+Quantização é o processo de reduzir o número de níveis possíveis de intensidade em uma imagem.
+Por exemplo, uma imagem de 8 bits/pixel possui 256 níveis de cinza, enquanto uma imagem de 2 bits/pixel possui apenas 4 níveis.
+A quantização é essencial em compressão e exibição de imagens em dispositivos com profundidade limitada, mas pode causar \textit{banding} — faixas visíveis entre tons contínuos.
+
+\paragraph*{Limiarização}
+A limiarização (ou \textit{thresholding}) é uma forma simples de quantização binária, em que cada pixel é comparado a um valor de referência (limiar) e convertido em preto ou branco (ou em níveis fixos).
+Embora simples, esse método tende a gerar regiões abruptas e artificiais, pois não considera o contexto dos pixels vizinhos.
+
+\paragraph*{Dithering}
+O \textit{dithering} introduz ruído controlado para distribuir o erro de quantização entre os pixels, criando a ilusão de tons intermediários. O resultado é visualmente mais suave e natural, especialmente em gradientes e superfícies homogêneas.
+Diferentemente da limiarização, o \textit{dithering} preserva a percepção de textura e profundidade tonal, mesmo com poucos níveis de cinza.
+
+\subsubsection{Algoritmos}
+
+\paragraph*{Dithering de Floyd-Steinberg}
+Método \textbf{adaptativo} que compensa o erro de quantização de um pixel distribuindo-o para os pixels vizinhos ainda não processados, conforme a máscara de difusão de erro:
+
+\[
+\text{Máscara de Floyd-Steinberg:} \quad
+\begin{bmatrix}
+ &  & \frac{7}{16} \\
+\frac{3}{16} & \frac{5}{16} & \frac{1}{16}
+\end{bmatrix}
+\]
+
+Este processo evita a acumulação do erro e cria uma aparência natural, simulando valores intermediários de intensidade.
+
+\paragraph*{Dithering Ordenado de Bayer}
+Método \textbf{estático} de dithering que utiliza uma matriz de limiares periódica (Matriz de Bayer) para definir o padrão de quantização:
+
+\[
+B_4 =
+\begin{bmatrix}
+0 & 8 & 2 & 10 \\
+12 & 4 & 14 & 6 \\
+3 & 11 & 1 & 9 \\
+15 & 7 & 13 & 5
+\end{bmatrix}
+\]
+
+Cada pixel é comparado ao limiar correspondente na matriz, e o padrão é repetido sobre toda a imagem, produzindo uma textura visual regular.
+
+\paragraph*{Limiarização}
+No método de limiarização para múltiplos bits, o intervalo de tons é dividido uniformemente.
+Cada pixel é classificado no nível de cinza correspondente conforme seu valor se encaixa nos intervalos definidos por esses limiares.
+
+
+\subsubsection{Implementação}
+\paragraph*{Código — Dithering de Floyd-Steinberg}
 \begin{minipage}{\linewidth}
-    \lstinputlisting{q4.m}
+    \lstinputlisting[language=MATLAB, caption={Implementação em MATLAB do Dithering de Floyd-Steinberg}, label={lst:floydsteinberg}]{floyd_steinberg.m}
 \end{minipage}
+
+\paragraph*{Código — Dithering de Bayer}
+\begin{minipage}{\linewidth}
+    \lstinputlisting[language=MATLAB, caption={Implementação em MATLAB do Dithering de Bayer}, label={lst:bayer}]{bayer.m}
+\end{minipage}
+
+% \paragraph*{Código — Limiarização}
+% \begin{minipage}{\linewidth}
+%     \lstinputlisting[language=MATLAB, caption={Implementação em MATLAB do método de Limiarização}, label={lst:threshold}]{thresholding.m}
+% \end{minipage}
+
+% \paragraph*{Código — Geração de Relatório}
+% \begin{minipage}{\linewidth}
+%     \lstinputlisting[language=MATLAB, caption={Função principal para geração do relatório de Dithering}, label={lst:geraRelatorioDithering}]{geraRelatorioDithering.m}
+% \end{minipage}
+
+\subsubsection{Resultados e Discussão}
+
+Foram testadas as imagens \textbf{raposa.jpg} e \textbf{borboleta.jpg}, ambas em tons de cinza (8 bits/pixel).  
+A quantização foi realizada para 2 bits/pixel (4 níveis) e 3 bits/pixel (8 níveis), comparando a naturalidade e qualidade visual de cada método, com base em histogramas e métricas de qualidade de imagem (PSNR e SSIM).
+
+\twofigures{resultados_dithering/raposa_comparacao.png}{raposa_comparacao}{resultados_dithering/borboleta_comparacao.png}{borboleta_comparacao}{Comparação visual entre métodos de Dithering e Limiarização}{q4_comparacao}
+
+\paragraph*{Métricas Utilizadas}
+\begin{itemize}
+    \item \textbf{PSNR (Peak Signal-to-Noise Ratio)} — mede a relação entre o sinal máximo e o ruído de quantização. Valores maiores indicam melhor preservação da imagem original.
+    \item \textbf{SSIM (Structural Similarity Index)} — avalia a similaridade estrutural entre imagens. Varia entre 0 e 1.
+    \item \textbf{MSE (Mean Squared Error)} — mede o erro quadrático médio entre os pixels das imagens.
+\end{itemize}
+
+\begin{table}[h!]
+    \centering
+    \caption{Resumo das métricas de qualidade para cada método}
+    \label{tab:q4-metricas}
+    \begin{tabular}{lccc}
+        \toprule
+        \textbf{Método} & \textbf{PSNR Médio (dB)} & \textbf{SSIM Médio} & \textbf{Ranking} \\
+        \midrule
+        Floyd-Steinberg (3 bits) & 18.23 & 0.7845 & 1 \\
+        Floyd-Steinberg (2 bits) & 15.67 & 0.6521 & 2 \\
+        Bayer (3 bits)           & 14.89 & 0.5987 & 3 \\
+        Bayer (2 bits)           & 12.45 & 0.4876 & 4 \\
+        Limiarização (3 bits)    & 11.73 & 0.4220 & 5 \\
+        Limiarização (2 bits)    & 9.98  & 0.3185 & 6 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\paragraph*{Discussão}
+O algoritmo de Floyd-Steinberg apresentou os melhores resultados em termos de naturalidade e qualidade perceptual, pois sua difusão de erro evita padrões repetitivos.  
+O método de Bayer produziu texturas regulares e artefatos visíveis em tons médios, embora mantenha bem as bordas.  
+Já a limiarização, por não distribuir erros, resultou em uma aparência artificial e alto contraste, com perda significativa de suavidade tonal.
 
 \end{document}

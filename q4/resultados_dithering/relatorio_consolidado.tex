@@ -1,0 +1,37 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[brazil]{babel}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{booktabs}
+\usepackage{geometry}
+\usepackage{amsmath}
+\usepackage{siunitx}
+\geometry{a4paper, left=2cm, right=2cm, top=2cm, bottom=2cm}
+
+\title{Relatório Consolidado - Métricas de Qualidade de Dithering}
+\author{Análise Computacional}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Imagem: borboleta}
+\input{borboleta_metricas.tex}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.9\textwidth]{borboleta_comparacao_completa.png}
+\caption{Resultados completos para borboleta}
+\label{fig:completa-borboleta}
+\end{figure}
+
+\section{Análise Comparativa entre Imagens}
+\subsection{Performance por Algoritmo}
+\subsubsection{borboleta}
+\begin{itemize}
+\item \textbf{Melhor PSNR}: Floyd-Steinberg 3bit (25.64 dB)
+\item \textbf{Melhor SSIM}: Floyd-Steinberg 3bit (0.5286)
+\end{itemize}
+\end{document}

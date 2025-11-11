@@ -14,6 +14,9 @@
 \usepackage[nottoc,numbib]{tocbibind} % For making the bibliography appear in the table of contents
 \usepackage{titlesec} % For paragraph to behave like sub-sub-sub-section
 
+\usepackage{amstext}
+\usepackage{amsmath}
+
 \usepackage{float}
 \usepackage{caption}
 \usepackage{subcaption}
@@ -88,19 +91,20 @@
 
 \newcommand{\twofiguresnoupscale}[6]{
 \begin{figure}[H]
-\centering
-\begin{subfigure}{.5\textwidth}
-  \centering
-  \scalegraphics{#1}
-  \caption{#2}
-\end{subfigure}%
-\begin{subfigure}{.5\textwidth}
-  \centering
-  \scalegraphics{#3}
-  \caption{#4}
-\end{subfigure}
-\caption{#5}
-\label{fig:#6}
+    \centering
+    \begin{subfigure}{.5\textwidth-.5em}
+        \centering
+        \scalegraphics{#1}
+        \caption{#2}
+    \end{subfigure}%
+    \hskip .5em
+    \begin{subfigure}{.5\textwidth-.5em}
+        \centering
+        \scalegraphics{#3}
+        \caption{#4}
+    \end{subfigure}
+    \caption{#5}
+    \label{fig:#6}
 \end{figure}
 }
 
