@@ -55,11 +55,6 @@ B_4 =
 
 Cada pixel é comparado ao limiar correspondente na matriz, e o padrão é repetido sobre toda a imagem, produzindo uma textura visual regular.
 
-\paragraph*{Limiarização}
-No método de limiarização para múltiplos bits, o intervalo de tons é dividido uniformemente.
-Cada pixel é classificado no nível de cinza correspondente conforme seu valor se encaixa nos intervalos definidos por esses limiares.
-
-
 \subsubsection{Implementação}
 \paragraph*{Código — Dithering de Floyd-Steinberg}
 \begin{minipage}{\linewidth}
@@ -86,7 +81,19 @@ Cada pixel é classificado no nível de cinza correspondente conforme seu valor 
 Foram testadas as imagens \textbf{raposa.jpg} e \textbf{borboleta.jpg}, ambas em tons de cinza (8 bits/pixel).  
 A quantização foi realizada para 2 bits/pixel (4 níveis) e 3 bits/pixel (8 níveis), comparando a naturalidade e qualidade visual de cada método, com base em histogramas e métricas de qualidade de imagem (PSNR e SSIM).
 
-\twofigures{resultados_dithering/raposa_comparacao.png}{raposa_comparacao}{resultados_dithering/borboleta_comparacao.png}{borboleta_comparacao}{Comparação visual entre métodos de Dithering e Limiarização}{q4_comparacao}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\columnwidth]{resultados_dithering/raposa_comparacao_completa.png}
+    \caption{Comparação visual entre métodos de Dithering}
+    \label{fig:q4_comparacao_raposa}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\columnwidth]{resultados_dithering/borboleta_comparacao_completa.png}
+    \caption{Comparação visual entre métodos de Dithering}
+    \label{fig:q4_comparacao_borboleta}
+\end{figure}
 
 \paragraph*{Métricas Utilizadas}
 \begin{itemize}
@@ -107,8 +114,6 @@ A quantização foi realizada para 2 bits/pixel (4 níveis) e 3 bits/pixel (8 n�
         Floyd-Steinberg (2 bits) & 15.67 & 0.6521 & 2 \\
         Bayer (3 bits)           & 14.89 & 0.5987 & 3 \\
         Bayer (2 bits)           & 12.45 & 0.4876 & 4 \\
-        Limiarização (3 bits)    & 11.73 & 0.4220 & 5 \\
-        Limiarização (2 bits)    & 9.98  & 0.3185 & 6 \\
         \bottomrule
     \end{tabular}
 \end{table}
@@ -116,6 +121,5 @@ A quantização foi realizada para 2 bits/pixel (4 níveis) e 3 bits/pixel (8 n�
 \paragraph*{Discussão}
 O algoritmo de Floyd-Steinberg apresentou os melhores resultados em termos de naturalidade e qualidade perceptual, pois sua difusão de erro evita padrões repetitivos.  
 O método de Bayer produziu texturas regulares e artefatos visíveis em tons médios, embora mantenha bem as bordas.  
-Já a limiarização, por não distribuir erros, resultou em uma aparência artificial e alto contraste, com perda significativa de suavidade tonal.
 
 \end{document}
