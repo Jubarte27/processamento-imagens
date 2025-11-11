@@ -3,10 +3,74 @@
 
 \begin{document}
 
-\subsection{Realce de imagens no domínio espacial (da imagem)}
-\subsubsection{Arquivo principal}
-\begin{minipage}{\linewidth}
-    \lstinputlisting{q2.m}
-\end{minipage}
+\subsection{Realce de Imagens e Efeitos de Parâmetros}
+
+\paragraph*{Objetivo}
+O objetivo deste experimento é analisar o impacto dos parâmetros de manipulação de contraste, equalização de histograma e operações sobre o canal de intensidade (V) em imagens coloridas no espaço HSV. Busca-se compreender como cada técnica modifica a distribuição tonal e o aspecto visual da imagem.
+
+\subsubsection{Conceitos Fundamentais}
+
+\paragraph*{Manipulação de Contraste por Função de Transferência}
+A manipulação de contraste via função de transferência permite um controle direto sobre a relação entre os níveis de cinza de entrada e de saída da imagem.
+
+Os parâmetros principais são:
+\begin{itemize}
+    \item Intervalos definidos sobre a faixa de níveis de cinza (por exemplo, [0-80], [80-160], [160-255]);
+    \item Inclinações (\textit{slopes}) da função de transferência em cada intervalo, que determinam o grau de amplificação ou compressão do contraste;
+    \item Valores iniciais de cada intervalo, que controlam o deslocamento (\textit{offset}) entre as regiões da curva.
+\end{itemize}
+
+O aumento da inclinação em uma faixa de intensidade faz com que pequenas diferenças de níveis de cinza nessa faixa se tornem mais perceptíveis, ampliando o contraste local. Por outro lado, inclinações menores produzem compressão tonal, reduzindo o contraste e “achatando” as variações de intensidade.
+
+A escolha dos intervalos influencia fortemente a aparência final: ao realçar regiões mais escuras, detalhes em sombras tornam-se visíveis, mas regiões claras podem sofrer saturação (perda de detalhe). Da mesma forma, focar o realce nas regiões mais claras pode causar perda de informação nas áreas escuras.
+
+Assim, o efeito visual depende diretamente da forma da curva de transferência - linear, em “S” ou segmentada - e da distribuição tonal da imagem original.
+
+\paragraph*{Equalização de Histograma}
+Na equalização de histograma, o contraste é redistribuído automaticamente de forma a tornar o histograma de níveis de cinza mais uniforme. Esse método tende a aumentar o contraste global da imagem, especialmente em regiões onde o histograma original é concentrado em uma faixa estreita.
+
+O principal parâmetro implícito é o número de níveis de cinza considerados (geralmente 256). Quanto maior essa resolução, mais suave será a transição entre tons. Entretanto, em imagens com ruído, a equalização pode acentuar as flutuações de intensidade indesejadas, tornando o ruído mais visível.
+
+Em imagens com regiões já bem contrastadas, o processo pode gerar saturação (áreas muito claras ou muito escuras) e perda de naturalidade - por isso, é comum empregar versões modificadas, como a equalização adaptativa (CLAHE), quando se deseja preservar o equilíbrio local de contraste.
+
+\paragraph*{Imagem Colorida - Canal V em HSV}
+Ao converter uma imagem RGB para o espaço HSV, o canal V (\textit{Value}) representa a intensidade luminosa, enquanto H (\textit{Hue}) e S (\textit{Saturation}) mantêm as informações de cor.
+
+Aplicar \textit{stretching} de contraste ou equalização de histograma apenas sobre o canal V altera o brilho e o contraste sem distorcer significativamente as cores.
+
+No \textit{stretching}, a escolha dos limites inferior e superior de intensidade define o grau de expansão tonal: intervalos mais amplos aumentam o contraste, enquanto intervalos restritos produzem resultados mais sutis.
+
+Na equalização, o efeito é mais global, podendo intensificar reflexos e aumentar a vivacidade das cores, mas também pode gerar artefatos em regiões uniformes (como céu ou paredes), devido ao aumento local de contraste.
+
+A transformação inversa de HSV para RGB mostra que pequenas variações no canal V podem causar mudanças perceptíveis na saturação e brilho das cores, evidenciando que os parâmetros escolhidos devem equilibrar realce e naturalidade.
+
+\subsubsection{Implementação}
+\lstinputlisting{apply_piecewise_transfer.m}
+\lstinputlisting{hist_equalize_custom.m}
+
+\subsubsection{Resultados e Discussão}
+
+Foram utilizadas as seguintes imagens de teste: \textbf{bosqueia.png}, \textbf{paisagem.png} e \textbf{puma.png}.  
+Os resultados mostram o comportamento comparativo entre \textit{equalização de histograma} e \textit{função de transferência}, tanto para imagens em tons de cinza quanto coloridas.
+
+\paragraph*{Imagem 1 - Bosqueia (Colorida, Canal V em HSV)}
+\twofigures{color_he.png}{Equalização de histograma}{color_tf.png}{Função de transferência}{Resultados para imagem colorida (canal V em HSV)}{q2_color}
+
+\paragraph*{Imagem 2 - Paisagem (Escala de Cinza)}
+\twofigures{gray1_he.png}{Equalização de histograma}{gray1_tf.png}{Função de transferência}{Resultados para imagem \textit{paisagem.png}}{q2_gray1}
+
+\paragraph*{Imagem 3 - Puma (Escala de Cinza)}
+\twofigures{gray2_he.png}{Equalização de histograma}{gray2_tf.png}{Função de transferência}{Resultados para imagem \textit{puma.png}}{q2_gray2}
+
+\subsubsection{Análise dos Resultados}
+\begin{itemize}
+    \item A \textbf{função de transferência} oferece controle manual e preciso sobre o contraste, sendo ideal para ajustes localizados e análise técnica de regiões específicas.
+    \item A \textbf{equalização de histograma} tende a produzir um contraste global mais acentuado, realçando detalhes, mas pode causar saturação e perda de naturalidade em regiões uniformes.
+    \item Nas \textbf{imagens coloridas}, o realce aplicado ao canal V mantém as cores originais, mas pequenas variações de brilho podem alterar a percepção da saturação e intensidade.
+\end{itemize}
+
+\paragraph*{Conclusão}
+A escolha adequada dos parâmetros de realce depende do objetivo:  
+\textit{funções de transferência} são mais indicadas para ajustes finos e técnicos, enquanto a \textit{equalização de histograma} é preferida para obter resultados visuais mais marcantes de forma automática.
 
 \end{document}

@@ -12,9 +12,8 @@
 \paragraph*{Adição de Ruídos}
 Para iniciar esta etapa, deve-se inserir diferentes níveis de ruído sal e pimenta (salt and pepper) e ruído Gaussiano simultaneamente nas imagens selecionadas: “raposa.jpg” e “borboleta.jpg”. Para isso, utiliza-se a função imnoise, responsável por contaminar a imagem com ambos os tipos de ruídos.
 
-\begin{minipage}{\linewidth}
-    \lstinputlisting{adicao_de_ruido.m}
-\end{minipage}
+\paragraph*{Código}
+\lstinputlisting{adicao_de_ruido.m}
 
 Como resultado, temos as imagens originais contaminadas com ruído Gaussiano de variância 0.01 e com ruído salt \& pepper de densidade 0.05.
 
@@ -23,21 +22,20 @@ Como resultado, temos as imagens originais contaminadas com ruído Gaussiano de 
 \paragraph*{Filtragem Alpha Trimmed Mean}
 Em seguida, as imagens passam pelo filtro Alpha Trimmed Mean. Para isso, foi desenvolvida a função alpha\_trimmed\_mean\_filter 3x3, que aplica o filtro aos três canais de cor: vermelho, verde e azul, e, posteriormente, os resultados são combinados novamente para gerar a imagem final com os ruídos atenuados.
 
-\begin{minipage}{\linewidth}
-    \lstinputlisting{alpha_trimmed_mean_filter.m}
-\end{minipage}
+\paragraph*{Código}
+\lstinputlisting{alpha_trimmed_mean_filter.m}
 
 \twofigures{.out/raposa_filtered.png}{raposa_filtered}{.out/borboleta_filtered.png}{borboleta_filtered}{Imagens filtradas}{q3_filtered}
 
 \paragraph*{Medições PSNR e SNR}
 A avaliação da qualidade da filtragem é feita utilizando os parâmetros SNR (Signal-to-Noise Ratio) e PSNR (Peak Signal-to-Noise Ratio), por meio de suas respectivas funções. Como esses indicadores medem a relação entre o sinal original e o ruído, valores mais altos de SNR ou PSNR correspondem a menor presença de ruído, indicando melhor qualidade da imagem.
 
-\begin{minipage}{\linewidth}
-    \lstinputlisting{maina.m}
-\end{minipage}
+\paragraph*{Código}
+\lstinputlisting{maina.m}
+
 
 \begin{center}
-\begin{tabular}{ c c c }
+\begin{tabular}{ l r r }
                   & Borboleta& Raposa  \\
     Filtrada PSNR & 26.16 dB & 24.87 dB \\
     Filtrada SNR  & 19.84 dB & 19.14 dB \\
@@ -55,22 +53,20 @@ OBS.:  2 parâmetros no código:
 Sigma: Define o grau de suavização na máscara Gaussiana;
 Fator de ganho(amount): Define quanto os detalhes serão amplificados;
 
-\begin{minipage}{\linewidth}
-    \paragraph*{Código}
-    \lstinputlisting{mainb.m}
-\end{minipage}
+\paragraph*{Código}
+\lstinputlisting{mainb.m}
 
+\newpage
 \paragraph*{Comparações}
 Processando as imagens com sigma = 2.5 e amount = 0.5. Apesar do valor relativamente alto de sigma, as alterações não são muito evidentes devido ao baixo valor de amount. Ainda assim, é possível notar que os detalhes maiores, como os detalhes das asas e o pelo, apresentam maior definição e nitidez.
-
 \figurescompare{borboleta,raposa}{_25_05_unsharp}{Original}{Com Unsharp Masking}{sigma=2.5 e amount=0.5}{q3_25_05_unsharp}
 
+\newpage
 Processando as imagens com sigma = 2.5 e amount = 2.5. Nesse caso, as alterações tornam-se mais evidentes, com as asas mais nítidas e menos borradas. Na raposa, a pelagem também apresentou maior definição. 
-
 \figurescompare{borboleta,raposa}{_25_25_unsharp}{Original}{Com Unsharp Masking}{sigma=2.5 e amount=2.5}{q3_25_25_unsharp}
 
+\newpage
 Para avaliar as alterações geradas por diferentes valores de sigma, mantivemos amount = 2.5 para intensificar a máscara. No primeiro experimento, com sigma = 0.5, observa-se praticamente nada de mudança, somente um realce de pequenos detalhes.
-
 \figurescompare{borboleta,raposa}{_05_25_unsharp}{Original}{Com Unsharp Masking}{sigma=0.5 e amount=2.5}{q3_05_25_unsharp}
 
 

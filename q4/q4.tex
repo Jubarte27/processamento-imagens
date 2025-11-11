@@ -57,27 +57,13 @@ Cada pixel é comparado ao limiar correspondente na matriz, e o padrão é repet
 
 \subsubsection{Implementação}
 \paragraph*{Código — Dithering de Floyd-Steinberg}
-\begin{minipage}{\linewidth}
-    \lstinputlisting[language=MATLAB, caption={Implementação em MATLAB do Dithering de Floyd-Steinberg}, label={lst:floydsteinberg}]{floyd_steinberg.m}
-\end{minipage}
+\lstinputlisting{floyd_steinberg.m}
 
 \paragraph*{Código — Dithering de Bayer}
-\begin{minipage}{\linewidth}
-    \lstinputlisting[language=MATLAB, caption={Implementação em MATLAB do Dithering de Bayer}, label={lst:bayer}]{bayer.m}
-\end{minipage}
+\lstinputlisting{bayer.m}
 
-% \paragraph*{Código — Limiarização}
-% \begin{minipage}{\linewidth}
-%     \lstinputlisting[language=MATLAB, caption={Implementação em MATLAB do método de Limiarização}, label={lst:threshold}]{thresholding.m}
-% \end{minipage}
-
-% \paragraph*{Código — Geração de Relatório}
-% \begin{minipage}{\linewidth}
-%     \lstinputlisting[language=MATLAB, caption={Função principal para geração do relatório de Dithering}, label={lst:geraRelatorioDithering}]{geraRelatorioDithering.m}
-% \end{minipage}
-
+\newpage
 \subsubsection{Resultados e Discussão}
-
 Foram testadas as imagens \textbf{raposa.jpg} e \textbf{borboleta.jpg}, ambas em tons de cinza (8 bits/pixel).  
 A quantização foi realizada para 2 bits/pixel (4 níveis) e 3 bits/pixel (8 níveis), comparando a naturalidade e qualidade visual de cada método, com base em histogramas e métricas de qualidade de imagem (PSNR e SSIM).
 

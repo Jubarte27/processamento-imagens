@@ -1,10 +1,9 @@
-%% Interpolação em imagens coloridas
 scale = 2;
 baseimgs = {'cat.png', 'hamster.png'};
 
 algorithms = { ...
     'Original'                        , @(a, b) a                ; ...
-    'Nearest Neighbour'                , @nearest_neighbour_resize; ...
+    'Nearest Neighbour'               , @nearest_neighbour_resize; ...
     'Bilinear'                        , @bilinear_resize         ; ...
     'Bicubic'                         , @bicubic_resize          ; ...
 };
@@ -20,7 +19,7 @@ f = repmat(algorithms(:,2), image_count, 1);
 inimgs = reshape(repmat(baseimgs, runs_per_image, 1), 1, []); %% transpose
 outimgs = cell(1, total_runs);
 
-parfor i = 1:length(inimgs)
+for i = 1:length(inimgs)
     img = im2double(imread(inimgs{i}));
 
     outimgs{i} = f{i}(img, scale);

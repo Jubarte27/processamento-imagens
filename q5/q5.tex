@@ -7,7 +7,6 @@
 Tanto para a escala quanto para a rotação de imagens, a interpolação do vizinho mais próximo produz resultados mais quadrados, mantendo bem a variação de cores da imagem original. Já a interpolação bilinear perde um pouco a definição das cores, mas produz resultados mais suaves, evitando as bordas serradas geradas pelo vizinho mais próximo.
 
 Para a escala de imagens em mais de 3x, a interpolação bilinear é a que consegue o resultado mais próximo da original; contudo, a interpolação pelo vizinho mais próximo ainda tem seu uso em videogames que utilizam imagens propositalmente pixeladas, como no caso das pixel arts.
-\subsubsection{Resultados}
 
 \begin{figure}[H]
     \centering
@@ -19,6 +18,8 @@ Para a escala de imagens em mais de 3x, a interpolação bilinear é a que conse
     \label{fig:q5_lena_original}
 \end{figure}
 
+\newpage
+\subsubsection{Resultados}
 \twofiguresnoupscale{.out/lena_2X_nn_section.png}{Nearest Neighbour}{.out/lena_2X_bl_section.png}{Bilinear}{Zoom 2X}{q5_lena_2x}
 \twofiguresnoupscale{.out/lena_3X_nn_section.png}{Nearest Neighbour}{.out/lena_3X_bl_section.png}{Bilinear}{Zoom 3X}{q5_lena_3x}
 
@@ -28,9 +29,8 @@ Para a escala de imagens em mais de 3x, a interpolação bilinear é a que conse
 \twofiguresnoupscale{.out/lena_2X_nn_r45_section.png}{Nearest Neighbour}{.out/lena_2X_bl_r45_section.png}{Bilinear}{Zoom 2X - Rotacionado 45°}{q5_lena_2x_r45}
 \twofiguresnoupscale{.out/lena_3X_nn_r45_section.png}{Nearest Neighbour}{.out/lena_3X_bl_r45_section.png}{Bilinear}{Zoom 3X - Rotacionado 45°}{q5_lena_3x_r45}
 
+\newpage
 \subsubsection{Código}
-% \begin{minipage}{\linewidth}
-\lstinputlisting{escala.m}% arquivo enorme, não tem como colocar em minipage
-% \end{minipage}
+\lstinputlisting{escala.m}
 
 \end{document}

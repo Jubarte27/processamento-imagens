@@ -1,0 +1,47 @@
+Discussão dos Efeitos dos Parâmetros nos Resultados Obtidos
+1. Manipulação de contraste por função de transferência
+
+A manipulação de contraste via função de transferência permite um controle direto sobre a relação entre os níveis de cinza de entrada e de saída da imagem.
+Os parâmetros principais são:
+
+Intervalos definidos sobre a faixa de níveis de cinza (por exemplo, [0–80], [80–160], [160–255]);
+
+Inclinações (slopes) da função de transferência em cada intervalo, que determinam o grau de amplificação ou compressão do contraste;
+
+Valores iniciais de cada intervalo, que controlam o deslocamento (offset) entre as regiões da curva.
+
+O aumento da inclinação em uma faixa de intensidade faz com que pequenas diferenças de níveis de cinza nessa faixa se tornem mais perceptíveis, ampliando o contraste local. Por outro lado, inclinações menores produzem compressão tonal, reduzindo o contraste e “achatando” as variações de intensidade.
+
+A escolha dos intervalos influencia fortemente a aparência final: ao realçar regiões mais escuras, detalhes em sombras tornam-se visíveis, mas regiões claras podem sofrer saturação (perda de detalhe). Da mesma forma, focar o realce nas regiões mais claras pode causar perda de informação nas áreas escuras.
+Assim, o efeito visual depende diretamente da forma da curva de transferência — linear, em “S”, ou segmentada — e da distribuição tonal da imagem original.
+
+2. Equalização de histograma
+
+Na equalização de histograma, o contraste é redistribuído automaticamente de forma a tornar o histograma de níveis de cinza mais uniforme. Esse método tende a aumentar o contraste global da imagem, especialmente em regiões onde o histograma original é concentrado em uma faixa estreita.
+
+O principal parâmetro implícito é o número de níveis de cinza considerados (geralmente 256). Quanto maior essa resolução, mais suave será a transição entre tons. Entretanto, em imagens com ruído, a equalização pode acentuar as flutuações de intensidade indesejadas, tornando o ruído mais visível.
+
+Em imagens com regiões já bem contrastadas, o processo pode gerar saturação (áreas muito claras ou muito escuras) e perda de naturalidade — por isso, é comum empregar versões modificadas, como equalização adaptativa (CLAHE), quando se deseja preservar o equilíbrio local de contraste.
+
+3. Imagem colorida – canal V em HSV
+
+Ao converter uma imagem RGB para HSV, o canal V (Value) representa a intensidade luminosa, enquanto H (Hue) e S (Saturation) mantêm as informações de cor.
+Aplicar stretching de contraste ou equalização de histograma apenas sobre o canal V altera o brilho e o contraste sem distorcer significativamente as cores.
+
+No stretching, a escolha dos limites inferior e superior de intensidade define o grau de expansão tonal: intervalos mais amplos aumentam o contraste, enquanto intervalos restritos produzem resultados mais sutis.
+
+Na equalização, o efeito é mais global, podendo intensificar reflexos e aumentar a vivacidade das cores, mas também pode gerar artefatos em regiões uniformes (como céu ou paredes), devido ao aumento local de contraste.
+
+A transformação inversa de HSV para RGB mostra que pequenas variações no V podem causar mudanças perceptíveis na saturação e brilho das cores, evidenciando que os parâmetros escolhidos devem equilibrar realce e naturalidade.
+
+4. Considerações finais
+
+Em resumo:
+
+Função de transferência: oferece controle manual e preciso, ideal para ajustes específicos de faixas tonais.
+
+Equalização de histograma: automática e eficaz para imagens subexpostas ou de baixo contraste, mas pode gerar resultados artificiais.
+
+Operações no canal V (HSV): permitem realce global em imagens coloridas preservando a tonalidade, sendo úteis em aplicações visuais e fotográficas.
+
+A escolha adequada dos parâmetros depende, portanto, do objetivo do realce — se é melhorar a visualização técnica de detalhes (preferindo ajustes manuais) ou produzir uma imagem visualmente mais impactante (preferindo equalização automática).
