@@ -16,31 +16,26 @@ Foram escolhidos os algoritmos: Vizinho mais próximo (orderm 0), Bilinear (orde
 Pode-se dizer que a principal vantagem deste algoritmo é a simplicidade da sua implementação e, por conta dela, chega ao resultado mais rápido. Contudo, seu resultado é uma imagem bastante pixelizada, o que torna inadequada a sua utilização em fotografias. Apesar disso, ainda é bastnte utilizada por artistas que trabalham com pixel art, já que neste estilo é desejado ver cada pixel.
 
 \figurescomparenoupscale{cat,hamster}{_nearest_neighbour}{Original}{Interpolado}{Vizinho mais Próximo}{q1_nearest_neighbour}
-\begin{minipage}{\linewidth}
-    \paragraph{Código}
-    \lstinputlisting{nearest_neighbour_resize.m}
-\end{minipage}
+\paragraph{Código}
+\lstinputlisting{nearest_neighbour_resize.m}
 
 \newpage
 \subsubsection{Bilinear}
 Este algoritmo suaviza as transições entre pixels, o que gera um resultado visual mais natural que o vizinho mais próximo. Contudo, pela simplicidade da interpolação, causa leve borramento e perda de nitidez.
 
 \figurescomparenoupscale{cat,hamster}{_bilinear}{Original}{Interpolado}{Bilinear}{q1_bilinear}
-\begin{minipage}{\linewidth}
-    \paragraph{Código}
-    \lstinputlisting{bilinear_resize.m}
-    \lstinputlisting{lerp.m}
-\end{minipage}
+\paragraph{Código}
+\lstinputlisting{bilinear_resize.m}
+\lstinputlisting{lerp.m}
 
 \newpage
 \subsubsection{Bicúbico}
 Dentre os 3 algoritmos estudados é o que produz melhor resultado, gerando imagens finais mais suaves e detalhadas. Ainda existe perda de nitidez, mas ela é mínima em comparação. É também um algoritmo mais complexo e mais lento que os demais, além de gerar pequenos artefatos em bordas com o contraste muito alto.
 
 \figurescomparenoupscale{cat,hamster}{_bicubic}{Original}{Interpolado}{Bicúbico}{q1_bicubic}
-\begin{minipage}{\linewidth}
-    \paragraph{Código}
-    \lstinputlisting{bicubic_resize.m}
-\end{minipage}
+
+\paragraph{Código}
+\lstinputlisting{bicubic_resize.m}
 
 \subsubsection{Script e funções auxiliares}
 \lstinputlisting{q1.m}
