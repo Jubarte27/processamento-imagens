@@ -3,71 +3,107 @@
 
 \begin{document}
 
-\subsection{Filtragem espacial}
-\subsubsection{Ruídos Salt \& Pepper e Gaussian}
+\section{Segmentação}
+Nesta etapa do trabalho, foram implementados dois métodos distintos de segmentação aplicados a duas imagens coloridas. O objetivo é comparar abordagens baseadas em diferentes princípios: uma fundamentada exclusivamente em agrupamento no espaço de cores, e outra que utiliza propriedades de textura, incorporando informações adicionais sobre padrões locais da imagem.
 
-% Imagens Originais
-\twofigures{raposa.jpg}{raposa}{borboleta.jpg}{borboleta}{Imagens originais}{q3_original}
+A segmentação é uma tarefa fundamental no processamento de imagens, pois permite dividir a imagem em regiões homogêneas que representam objetos, fundos ou áreas de interesse. Neste trabalho, optou-se por métodos que produzem resultados estruturados e que seguem diretamente o que foi solicitado pelo enunciado: um método baseado em agrupamento (k-means) e um método que utilize textura.
 
-\paragraph*{Adição de Ruídos}
-Para iniciar esta etapa, deve-se inserir diferentes níveis de ruído sal e pimenta (salt and pepper) e ruído Gaussiano simultaneamente nas imagens selecionadas: “raposa.jpg” e “borboleta.jpg”. Para isso, utiliza-se a função imnoise, responsável por contaminar a imagem com ambos os tipos de ruídos.
+Além disso, em ambos os métodos foram testados diferentes valores de K, permitindo avaliar como a granularidade da segmentação influencia a qualidade e o nível de detalhamento obtido.
 
-\paragraph*{Código}
-\lstinputlisting{adicao_de_ruido.m}
+\subsection{Metodologia}
+A metodologia foi organizada em duas abordagens independentes, cada uma avaliada com três valores distintos de K ( 2, 3 e 4).
 
-Como resultado, temos as imagens originais contaminadas com ruído Gaussiano de variância 0.01 e com ruído salt \& pepper de densidade 0.05.
+\subsubsection{Segmentação por K-means no Espaço de Cor Lab}
+A imagem é inicialmente convertida do espaço RGB para o espaço Lab, que separa a luminância dos componentes cromáticos e melhora a distinção entre cores semelhantes. Cada pixel é representado pelo vetor (L, a, b) e todos os pixels são reunidos em uma matriz de características.
 
-\twofigures{.out/raposa_ruido.png}{raposa_ruido}{.out/borboleta_ruido.png}{borboleta_ruido}{Imagens com ruído}{q3_ruido}
+Em seguida, aplicam-se sucessivamente diferentes valores de K no algoritmo K-means, produzindo segmentações com níveis variados de separação entre regiões. Cada resultado é reorganizado no formato da imagem original, gerando mapas de clusters com diferentes granularidades.
 
-\paragraph*{Filtragem Alpha Trimmed Mean}
-Em seguida, as imagens passam pelo filtro Alpha Trimmed Mean. Para isso, foi desenvolvida a função alpha\_trimmed\_mean\_filter 3x3, que aplica o filtro aos três canais de cor: vermelho, verde e azul, e, posteriormente, os resultados são combinados novamente para gerar a imagem final com os ruídos atenuados.
+Esse método utiliza apenas a cor como critério de separação, sendo eficaz para segmentar objetos visualmente distintos ou regiões com tonalidades marcadas.
 
-\paragraph*{Código}
-\lstinputlisting{alpha_trimmed_mean_filter.m}
+\subsubsection{Segmentação baseada em Textura com Filtros de Gabor}
+Para incorporar informações de textura, utiliza-se um conjunto de filtros de Gabor com múltiplas orientações e frequências espaciais. Essas respostas são capazes de detectar padrões repetitivos e estruturas locais como bordas, rugosidade e variações de orientação.
 
-\twofigures{.out/raposa_filtered.png}{raposa_filtered}{.out/borboleta_filtered.png}{borboleta_filtered}{Imagens filtradas}{q3_filtered}
+Após converter a imagem para tons de cinza, cada filtro é aplicado e gera um mapa de textura. Os valores de resposta são vetorizados, normalizados e utilizados como entrada para o algoritmo K-means. Assim como no método anterior, diferentes valores de K são testados (2, 3 e 4), resultando em segmentações mais grossas ou mais detalhadas.
 
-\paragraph*{Medições PSNR e SNR}
-A avaliação da qualidade da filtragem é feita utilizando os parâmetros SNR (Signal-to-Noise Ratio) e PSNR (Peak Signal-to-Noise Ratio), por meio de suas respectivas funções. Como esses indicadores medem a relação entre o sinal original e o ruído, valores mais altos de SNR ou PSNR correspondem a menor presença de ruído, indicando melhor qualidade da imagem.
+Esse método é capaz de separar regiões que possuem texturas distintas mesmo quando têm cores semelhantes, sendo complementar à segmentação baseada somente em cor.
 
-\paragraph*{Código}
-\lstinputlisting{maina.m}
+\subsection{Código}
 
 
-\begin{center}
-\begin{tabular}{ l r r }
-                  & Borboleta& Raposa  \\
-    Filtrada PSNR & 26.16 dB & 24.87 dB \\
-    Filtrada SNR  & 19.84 dB & 19.14 dB \\
-    Ruidosa PSNR  & 16.26 dB & 16.58 dB \\
-    Ruidosa SNR   & 10.25 dB & 11.14 dB  \\
-\end{tabular}
-\end{center}
+
+\subsection{Resultados Obtidos e Análise}
+
+Os resultados obtidos mostram diferenças claras entre os métodos de segmentação baseados em cor (K-means no espaço Lab) e aqueles baseados em textura (filtros de Gabor). Além disso, a variação do número de clusters K influencia diretamente o nível de detalhe das regiões segmentadas.
+
+\subsubsection{Imagens originais}
 
 
-\subsubsection{Unsharp Masking}
 
-Ao aplicar este filtro, os detalhes da imagem original são realçados sem a introdução de ruído. Inicialmente, a imagem é suavizada por meio de convoluções Gaussianas, que funcionam como filtros passa-baixa, removendo componentes de alta frequência, como texturas finas e bordas. Em seguida, a imagem suavizada é subtraída da original, e os detalhes resultantes são ampliados através da multiplicação por um fator de ganho “amount”. Por fim, esse resultado é somado à imagem original, proporcionando o realce final de detalhes e contornos.
+K-means (Lab) - Imagem da Borboleta
 
-OBS.:  2 parâmetros no código:
-Sigma: Define o grau de suavização na máscara Gaussiana;
-Fator de ganho(amount): Define quanto os detalhes serão amplificados;
+Para a borboleta, o método baseado apenas em cor teve desempenho satisfatório.
 
-\paragraph*{Código}
-\lstinputlisting{mainb.m}
+K = 2: A segmentação separa de forma nítida o fundo e a borboleta, criando uma divisão simples, porém eficaz. A forma do inseto permanece bem definida.
 
-\newpage
-\paragraph*{Comparações}
-Processando as imagens com sigma = 2.5 e amount = 0.5. Apesar do valor relativamente alto de sigma, as alterações não são muito evidentes devido ao baixo valor de amount. Ainda assim, é possível notar que os detalhes maiores, como os detalhes das asas e o pelo, apresentam maior definição e nitidez.
-\figurescompare{borboleta,raposa}{_25_05_unsharp}{Original}{Com Unsharp Masking}{sigma=2.5 e amount=0.5}{q3_25_05_unsharp}
+K = 3: Surge uma subdivisão interna da borboleta, separando áreas mais claras e mais escuras das asas. O fundo também é dividido em mais uma região.
 
-\newpage
-Processando as imagens com sigma = 2.5 e amount = 2.5. Nesse caso, as alterações tornam-se mais evidentes, com as asas mais nítidas e menos borradas. Na raposa, a pelagem também apresentou maior definição. 
-\figurescompare{borboleta,raposa}{_25_25_unsharp}{Original}{Com Unsharp Masking}{sigma=2.5 e amount=2.5}{q3_25_25_unsharp}
+K = 4: A segmentação se torna mais rica em detalhes, incluindo nuances de tons tanto nas asas quanto no fundo. Apesar disso, alguns ruídos começam a aparecer, especialmente na região externa da imagem.
 
-\newpage
-Para avaliar as alterações geradas por diferentes valores de sigma, mantivemos amount = 2.5 para intensificar a máscara. No primeiro experimento, com sigma = 0.5, observa-se praticamente nada de mudança, somente um realce de pequenos detalhes.
-\figurescompare{borboleta,raposa}{_05_25_unsharp}{Original}{Com Unsharp Masking}{sigma=0.5 e amount=2.5}{q3_05_25_unsharp}
+Em geral, o método K-means captou bem as diferenças de cor e luminosidade da borboleta, mesmo sem considerar textura.
+
+\subsubsection{Borboleta K-Means}
+
+Gabor (Textura) - Imagem da Borboleta
+
+Nos resultados baseados em textura, o comportamento muda significativamente.
+
+K = 2: A segmentação destaca padrões de textura nas asas, mas também introduz ruídos decorrentes das respostas dos filtros.
+
+K = 3: Algumas estruturas internas da borboleta começam a ser separadas com maior consistência, mas o ruído ainda permanece evidente.
+
+K = 4: Surge mais definição na silhueta e nas áreas texturizadas, porém a segmentação ainda mantém regiões ruidosas, especialmente no fundo.
+
+O método baseado em Gabor é muito sensível a variações de textura e, neste caso, acaba segmentando várias regiões que não correspondem a objetos reais, mas sim aos padrões do filtro. Ainda assim, ele ressalta detalhes internos das asas que não aparecem no K-means de cor.
+
+\subsubsection{Borboleta Gabor + K-Means}
+
+K-means (Lab) - Imagem da Raposa
+
+Para a raposa, que tem variações relevantes de cor entre o animal e o fundo, o método funciona bem.
+
+K = 2: Já é possível separar o animal do fundo, embora algumas partes fiquem agrupadas de forma simplificada.
+
+K = 3: O contorno da raposa aparece de maneira mais fiel, com separação mais clara das sombras e detalhes do pescoço.
+
+K = 4: A segmentação fica mais detalhada, diferenciando ainda mais regiões do pelo e partes do fundo. Porém, assim como na borboleta, o aumento de K também traz pequenas regiões quebradas e ruídos.
+
+O método de cor consegue destacar a raposa de forma eficiente, mostrando uma boa separação entre fundo, pelo claro e pelo escuro.
+
+\subsubsection{Raposa K-Means}
+
+Gabor (Textura) - Imagem da Raposa
+
+Como na borboleta, o método baseado em textura produz resultados mais irregulares.
+
+K = 2: Os padrões de textura do filtro dominam a imagem, com grande presença de ruído. Ainda assim, algumas áreas da raposa se destacam do fundo.
+K = 3: A silhueta da raposa torna-se mais perceptível, e diferentes regiões de textura começam a ser agrupadas de maneira mais coerente.
+K = 4: Surgem regiões mais próximas do formato real do animal, com subdivisão de áreas texturizadas no pelo. No entanto, o ruído permanece significativo.
+
+De forma geral, o método baseado em textura é mais adequado para imagens com padrões repetitivos bem definidos. A imagem da raposa, por ter texturas mais suaves, não se beneficia tanto dos filtros Gabor quanto a segmentação por cor.
+
+\subsubsection{Raposa Gabor + K-Means}
+
+\subsection{Conclusão da Análise}
+Os experimentos mostram que:
+
+K-means no espaço Lab produz segmentações mais limpas, estruturadas e visualmente coerentes, destacando corretamente os objetos principais (borboleta e raposa).
+
+O método baseado em textura gera segmentações mais fragmentadas, capturando padrões de textura, mas também introduzindo ruídos consideráveis.
+
+A variação de K controla o nível de detalhe: valores baixos criam segmentações mais simples; valores maiores aumentam a granularidade, mas podem introduzir ruído.
+
+Para as imagens utilizadas, a segmentação por cor foi mais eficaz, enquanto o método baseado em textura foi mais útil apenas para ressaltar detalhes internos e padrões finos.
+
 
 
 \end{document}

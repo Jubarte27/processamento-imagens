@@ -3,74 +3,95 @@
 
 \begin{document}
 
-\subsection{Realce de Imagens e Efeitos de Parâmetros}
+\section{Compressão baseada na quantização vetorial}
+Nesta etapa do trabalho, foi implementada uma técnica de compressão baseada em quantização vetorial (VQ). Esse método consiste em dividir a imagem em blocos de dimensões fixas, agrupar blocos similares por meio do algoritmo K-Means, e substituir cada bloco da imagem por um índice que referencia um bloco representativo dentro de um codebook.
 
-\paragraph*{Objetivo}
-O objetivo deste experimento é analisar o impacto dos parâmetros de manipulação de contraste, equalização de histograma e operações sobre o canal de intensidade (V) em imagens coloridas no espaço HSV. Busca-se compreender como cada técnica modifica a distribuição tonal e o aspecto visual da imagem.
+O processo foi aplicado a quatro imagens: duas em tons de cinza (doca e cachorro) e duas coloridas (borboleta e raposa). Para cada imagem, foram testados dois tamanhos de blocos: 2\times2 e 3\times3. Em todos os casos, o codebook é composto por 256 vetores, conforme solicitado no enunciado. 
 
-\subsubsection{Conceitos Fundamentais}
+\subsection{Metodologia}
+O método foi dividido nas seguintes etapas:
 
-\paragraph*{Manipulação de Contraste por Função de Transferência}
-A manipulação de contraste via função de transferência permite um controle direto sobre a relação entre os níveis de cinza de entrada e de saída da imagem.
+\subsubsection{Formação dos blocos}
+A imagem é percorrida em blocos não sobrepostos, de tamanho 2\times2 ou 3\times3. Cada bloco é convertido em um vetor coluna. No caso de imagens coloridas, esse processo é feito por canal (R,G,B).
 
-Os parâmetros principais são:
-\begin{itemize}
-    \item Intervalos definidos sobre a faixa de níveis de cinza (por exemplo, [0-80], [80-160], [160-255]);
-    \item Inclinações (\textit{slopes}) da função de transferência em cada intervalo, que determinam o grau de amplificação ou compressão do contraste;
-    \item Valores iniciais de cada intervalo, que controlam o deslocamento (\textit{offset}) entre as regiões da curva.
-\end{itemize}
+\subsubsection{Construção do Codebook (K-Means)}
+Coletamos uma amostra dos blocos da imagem e aplicamos o algoritmo K-Means para agrupá-los em 256 grupos. O centro de cada cluster torna-se uma palavra do codebook.
 
-O aumento da inclinação em uma faixa de intensidade faz com que pequenas diferenças de níveis de cinza nessa faixa se tornem mais perceptíveis, ampliando o contraste local. Por outro lado, inclinações menores produzem compressão tonal, reduzindo o contraste e “achatando” as variações de intensidade.
+\subsubsection{Compressão}
+Cada bloco da imagem é substituído por um índice inteiro entre 1 e 256, correspondente ao bloco mais próximo do codebook. A imagem comprimida contém: o codebook e a matriz de índices.
 
-A escolha dos intervalos influencia fortemente a aparência final: ao realçar regiões mais escuras, detalhes em sombras tornam-se visíveis, mas regiões claras podem sofrer saturação (perda de detalhe). Da mesma forma, focar o realce nas regiões mais claras pode causar perda de informação nas áreas escuras.
+\subsubsection{Reconstrução}
+A imagem é reconstituída substituindo cada índice pelo bloco correspondente no codebook. Para imagens coloridas, a operação é feita separadamente para os três canais.
 
-Assim, o efeito visual depende diretamente da forma da curva de transferência - linear, em “S” ou segmentada - e da distribuição tonal da imagem original.
+\subsubsection{Métricas}
+Foram calculados:
+Taxa de compressão = bits da imagem original / bits da representação VQ
+PSNR, comparando a imagem reconstruída com a original
 
-\paragraph*{Equalização de Histograma}
-Na equalização de histograma, o contraste é redistribuído automaticamente de forma a tornar o histograma de níveis de cinza mais uniforme. Esse método tende a aumentar o contraste global da imagem, especialmente em regiões onde o histograma original é concentrado em uma faixa estreita.
+\subsection{Código}
 
-O principal parâmetro implícito é o número de níveis de cinza considerados (geralmente 256). Quanto maior essa resolução, mais suave será a transição entre tons. Entretanto, em imagens com ruído, a equalização pode acentuar as flutuações de intensidade indesejadas, tornando o ruído mais visível.
 
-Em imagens com regiões já bem contrastadas, o processo pode gerar saturação (áreas muito claras ou muito escuras) e perda de naturalidade - por isso, é comum empregar versões modificadas, como a equalização adaptativa (CLAHE), quando se deseja preservar o equilíbrio local de contraste.
 
-\paragraph*{Imagem Colorida - Canal V em HSV}
-Ao converter uma imagem RGB para o espaço HSV, o canal V (\textit{Value}) representa a intensidade luminosa, enquanto H (\textit{Hue}) e S (\textit{Saturation}) mantêm as informações de cor.
 
-Aplicar \textit{stretching} de contraste ou equalização de histograma apenas sobre o canal V altera o brilho e o contraste sem distorcer significativamente as cores.
+\subsection{Resultados Obtidos}
+Os valores de taxa de compressão e PSNR obtidos estão apresentados nas tabelas a seguir.
 
-No \textit{stretching}, a escolha dos limites inferior e superior de intensidade define o grau de expansão tonal: intervalos mais amplos aumentam o contraste, enquanto intervalos restritos produzem resultados mais sutis.
+Imagens em tons de cinza
+Imagem
+Bloco
+Taxa
+PSNR (dB)
+doca
+2x2
+3.76
+36.73
+cachorro
+2x2
+3.76
+38.04
+doca
+3x3
+6.76
+33.47
+cachorro
+3x3
+6.76
+35.23
 
-Na equalização, o efeito é mais global, podendo intensificar reflexos e aumentar a vivacidade das cores, mas também pode gerar artefatos em regiões uniformes (como céu ou paredes), devido ao aumento local de contraste.
 
-A transformação inversa de HSV para RGB mostra que pequenas variações no canal V podem causar mudanças perceptíveis na saturação e brilho das cores, evidenciando que os parâmetros escolhidos devem equilibrar realce e naturalidade.
 
-\subsubsection{Implementação}
-\lstinputlisting{apply_piecewise_transfer.m}
-\lstinputlisting{hist_equalize_custom.m}
+Imagens coloridas
+Imagem
+Bloco
+Taxa
+PSNR (dB)
+borboleta
+2x2
+3.63
+33.75
+raposa
+2x2
+3.63
+34.82
+borboleta
+3x3
+5.89
+30.43
+raposa
+3x3
+5.89
+31.23
 
-\subsubsection{Resultados e Discussão}
+	
 
-Foram utilizadas as seguintes imagens de teste: \textbf{bosqueia.png}, \textbf{paisagem.png} e \textbf{puma.png}.  
-Os resultados mostram o comportamento comparativo entre \textit{equalização de histograma} e \textit{função de transferência}, tanto para imagens em tons de cinza quanto coloridas.
 
-\paragraph*{Imagem 1 - Bosqueia (Colorida, Canal V em HSV)}
-\twofigures{color_he.png}{Equalização de histograma}{color_tf.png}{Função de transferência}{Resultados para imagem colorida (canal V em HSV)}{q2_color}
+\subsection{Análise dos Resultados}
+Os resultados mostram claramente que o tamanho do bloco utilizado na VQ influencia diretamente a qualidade da reconstrução e a taxa de compressão. Com blocos de 2\times2, a imagem é dividida em partes menores e mais detalhadas, o que permite uma representação mais precisa pelos vetores do codebook. Por isso, as reconstruções apresentam valores de PSNR mais altos, indicando melhor qualidade visual, embora a taxa de compressão seja menor.
 
-\paragraph*{Imagem 2 - Paisagem (Escala de Cinza)}
-\twofigures{gray1_he.png}{Equalização de histograma}{gray1_tf.png}{Função de transferência}{Resultados para imagem \textit{paisagem.png}}{q2_gray1}
+Quando blocos de 3\times3 são utilizados, ocorre o inverso: como a imagem passa a ter menos blocos, a quantidade total de índices diminui e a taxa de compressão aumenta. No entanto, blocos maiores costumam reunir regiões com mais variação interna, o que prejudica a fidelidade da reconstrução e reduz o PSNR. Assim, confirma-se o trade-off esperado: blocos menores preservam a qualidade, enquanto blocos maiores privilegiam a compressão.
 
-\paragraph*{Imagem 3 - Puma (Escala de Cinza)}
-\twofigures{gray2_he.png}{Equalização de histograma}{gray2_tf.png}{Função de transferência}{Resultados para imagem \textit{puma.png}}{q2_gray2}
+Ao comparar imagens em tons de cinza com imagens coloridas, nota-se que as coloridas apresentam PSNR um pouco menor. Isso acontece porque cada canal (R, G e B) é quantizado separadamente, e as pequenas perdas de cada componente acabam se somando no resultado final. Mesmo assim, as taxas de compressão obtidas foram semelhantes às das imagens em cinza.
 
-\subsubsection{Análise dos Resultados}
-\begin{itemize}
-    \item A \textbf{função de transferência} oferece controle manual e preciso sobre o contraste, sendo ideal para ajustes localizados e análise técnica de regiões específicas.
-    \item A \textbf{equalização de histograma} tende a produzir um contraste global mais acentuado, realçando detalhes, mas pode causar saturação e perda de naturalidade em regiões uniformes.
-    \item Nas \textbf{imagens coloridas}, o realce aplicado ao canal V mantém as cores originais, mas pequenas variações de brilho podem alterar a percepção da saturação e intensidade.
-\end{itemize}
-
-\paragraph*{Conclusão}
-A escolha adequada dos parâmetros de realce depende do objetivo:  
-\textit{funções de transferência} são mais indicadas para ajustes finos e técnicos, enquanto a \textit{equalização de histograma} é preferida para obter resultados visuais mais marcantes de forma automática.
+Em resumo, os experimentos mostram exatamente o comportamento previsto pela teoria da VQ: blocos menores resultam em maior qualidade reconstruída, enquanto blocos maiores aumentam a compressão, porém com maior perda visual.
 
 \end{document}

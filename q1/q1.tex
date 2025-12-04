@@ -3,49 +3,93 @@
 
 \begin{document}
 
-\subsection{Interpolação em imagens coloridas}
+\section{Compressão baseada no modo básico do JPEG} 
+Nesta etapa do trabalho foi implementada uma versão simplificada do método JPEG baseline, mantendo as operações essenciais do algoritmo, porém sem utilizar a etapa de codificação entrópica (Run-Length Encoding e codificação de Huffman). O objetivo é analisar o comportamento da compressão apenas com as etapas de transformação, quantização e reconstrução.
 
-\paragraph*{Imagens}
-\twofiguresnoupscale{.out/cat.png}{cat}{.out/hamster.png}{hamster}{Imagens originais}{q1_original}
+\subsection{Metodologia}
+A compressão foi aplicada a duas imagens em tons de cinza selecionadas previamente. O método adotado segue a lógica do JPEG básico, composta pelas seguintes etapas:
 
-\paragraph*{Algoritmos}
-Foram escolhidos os algoritmos: Vizinho mais próximo (orderm 0), Bilinear (ordem 1) e Bicúbico (ordem 3)
+\subsubsection{Preparação da imagem}
+A imagem original é convertida para valores do tipo double e, caso suas dimensões não sejam múltiplas de 8, aplica-se padding replicando os valores da borda. Isso garante que a imagem possa ser dividida integralmente em blocos de 8\times8 pixels, tamanho padrão do JPEG\@.
 
-\newpage
-\subsubsection{Interpolação por vizinho mais próximo}
-Pode-se dizer que a principal vantagem deste algoritmo é a simplicidade da sua implementação e, por conta dela, chega ao resultado mais rápido. Contudo, seu resultado é uma imagem bastante pixelizada, o que torna inadequada a sua utilização em fotografias. Apesar disso, ainda é bastnte utilizada por artistas que trabalham com pixel art, já que neste estilo é desejado ver cada pixel.
+\subsubsection{Transformada Discreta do Cosseno (DCT)}{}
+Após a divisão em blocos, é aplicada a DCT bidimensional em cada bloco. Essa transformada converte a informação espacial da imagem em componentes de frequência, concentrando grande parte da energia nos primeiros coeficientes.
 
-\figurescomparenoupscale{cat,hamster}{_nearest_neighbour}{Original}{Interpolado}{Vizinho mais Próximo}{q1_nearest_neighbour}
-\paragraph{Código}
-\lstinputlisting{nearest_neighbour_resize.m}
+\subsubsection{Quantização}
+Cada bloco transformado é quantizado utilizando uma matriz de quantização padrão do JPEG, escalada por um fator Q, que controla a intensidade da compressão. Valores maiores de Q provocam quantização mais agressiva e, portanto, maior perda de informação e maior taxa de compressão.
 
-\newpage
-\subsubsection{Bilinear}
-Este algoritmo suaviza as transições entre pixels, o que gera um resultado visual mais natural que o vizinho mais próximo. Contudo, pela simplicidade da interpolação, causa leve borramento e perda de nitidez.
+\subsubsection{Reconstrução (Descompressão)}
+Para reconstruir a imagem comprimida, os coeficientes quantizados são de-quantizados (multiplicação pela matriz), e a Transformada Discreta do Cosseno inversa (IDCT) é aplicada aos blocos, retornando ao domínio espacial.
 
-\figurescomparenoupscale{cat,hamster}{_bilinear}{Original}{Interpolado}{Bilinear}{q1_bilinear}
-\paragraph{Código}
-\lstinputlisting{bilinear_resize.m}
-\lstinputlisting{lerp.m}
+\subsubsection{Cálculo das métricas}
+Dois indicadores foram utilizados para avaliar os resultados:
+\begin{itemize}
+    \item Taxa de compressão: estimada considerando a proporção entre o número total de coeficientes e o número de coeficientes não nulos após a quantização.
+    \item PSNR (Peak Signal-to-Noise Ratio): mede a similaridade entre a imagem original e a reconstruída; valores maiores indicam menor perda de qualidade.
+\end{itemize}
 
-\newpage
-\subsubsection{Bicúbico}
-Dentre os 3 algoritmos estudados é o que produz melhor resultado, gerando imagens finais mais suaves e detalhadas. Ainda existe perda de nitidez, mas ela é mínima em comparação. É também um algoritmo mais complexo e mais lento que os demais, além de gerar pequenos artefatos em bordas com o contraste muito alto.
+\subsection{Código}
+\lstinputlisting{jpeg_basic.m}
+\lstinputlisting{main_jpeg.m}
 
-\figurescomparenoupscale{cat,hamster}{_bicubic}{Original}{Interpolado}{Bicúbico}{q1_bicubic}
+\subsection{Resultados Obtidos}
+A compressão foi aplicada utilizando quatro valores diferentes para o fator de quantização (Q = 2, 4, 8 e 16) de modo a observar como o aumento da quantização influencia tanto a taxa de compressão quanto a qualidade final da imagem reconstruída.
 
-\paragraph{Código}
-\lstinputlisting{bicubic_resize.m}
+\subsubsection{Imagens originais}
+\twofigures{.out/raposa.png}{Raposa}{.out/borboleta.png}{Borboleta}{Imagens originais}{originais}
 
-\subsubsection{Script e funções auxiliares}
-\lstinputlisting{q1.m}
-\lstinputlisting{at_dim.m}
-\lstinputlisting{get_at_dim.m}
-\lstinputlisting{set_at_dim.m}
+\subsubsection{Imagens resultantes}
+\begin{center}
+\begin{tabular}{ |c|c|c| }
+    \hline
+    \multicolumn{3}{|c|}{Imagem 1: borboleta.jpg} \\
+    \hline
+    Q  & Taxa de Compressão & PSNR (dB) \\
+    \hline
+    2  & 11.89 & 31.95 \\
+    \hline
+    4  & 20.82 & 29.64 \\
+    \hline
+    8  & 35.33 & 27.24 \\
+    \hline
+    16 & 52.01 & 24.42 \\
+    \hline
+\end{tabular}
+\end{center}
 
-\lstinputlisting{docked_figure.m}
-\lstinputlisting{imgs_in_docked_figures.m}
 
-\lstinputlisting{q1.m}
+Imagem 2: raposa.jpg
+Q
+Taxa de Compressão
+PSNR (dB)
+2
+12.55
+29.38
+4
+20.58
+27.80
+8
+34.36
+26.03
+16
+52.65
+23.65
+
+
+\subsection{Análise dos Resultados}
+
+Os testes realizados mostram claramente a relação entre o fator de quantização e a qualidade final da imagem:
+
+Q baixo (ex.: Q = 2): Quando a quantização é fraca, a perda de informação é pequena. As duas imagens apresentaram PSNR acima de 29 dB, indicando boa preservação visual. A taxa de compressão, porém, permanece relativamente modesta (cerca de 12%).
+
+Q intermediário (Q = 4 e 8): À medida que o Q aumenta, mais coeficientes da DCT são aproximados para zero, o que reduz o tamanho dos dados. As taxas aumentam para cerca de 20% e depois para mais de 30%, ao custo de uma queda gradual no PSNR. Nessa faixa, os primeiros artefatos típicos do JPEG começam a aparecer, especialmente blocagem em áreas com pouca textura.
+
+Q alto (Q = 16): A compressão torna-se bastante agressiva: as taxas ultrapassam 50%, ou seja, mais da metade dos coeficientes se tornam nulos. Consequentemente, a qualidade se degrada mais intensamente, com PSNR entre 23 e 24 dB, valores que normalmente já representam perda de detalhes e blocos visíveis.
+Comparando as duas imagens, nota-se que:
+A Imagem 1 mantém valores de PSNR ligeiramente superiores em todos os níveis de compressão, sugerindo que sua estrutura visual é mais adequada ao modelo JPEG.
+
+
+A Imagem 2 apresenta queda de qualidade um pouco mais acentuada, indicando sensibilidade maior à quantização, possivelmente por conter áreas suaves ou gradientes que são mais afetados por perdas nas altas frequências.
+No geral, os resultados confirmam o comportamento esperado do algoritmo JPEG\@: mais compressão → mais perda → menor PSNR, com artefatos cada vez mais perceptíveis.
 
 \end{document}
