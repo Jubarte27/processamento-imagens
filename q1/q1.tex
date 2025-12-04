@@ -3,29 +3,29 @@
 
 \begin{document}
 
-\section{Compressão baseada no modo básico do JPEG} 
-Nesta etapa do trabalho foi implementada uma versão simplificada do método JPEG baseline, mantendo as operações essenciais do algoritmo, porém sem utilizar a etapa de codificação entrópica (Run-Length Encoding e codificação de Huffman). O objetivo é analisar o comportamento da compressão apenas com as etapas de transformação, quantização e reconstrução.
+\section{Compressão baseada no modo básico do \jpeg} 
+Nesta etapa do trabalho foi implementada uma versão simplificada do método \jpeg{} baseline, mantendo as operações essenciais do algoritmo, porém sem utilizar a etapa de codificação entrópica (Run-Length Encoding e codificação de Huffman). O objetivo é analisar o comportamento da compressão apenas com as etapas de transformação, quantização e reconstrução.
 
 \subsection{Metodologia}
-A compressão foi aplicada a duas imagens em tons de cinza selecionadas previamente. O método adotado segue a lógica do JPEG básico, composta pelas seguintes etapas:
+A compressão foi aplicada a duas imagens em tons de cinza selecionadas previamente. O método adotado segue a lógica do \jpeg{} básico, composta pelas seguintes etapas:
 
 \subsubsection{Preparação da imagem}
-A imagem original é convertida para valores do tipo double e, caso suas dimensões não sejam múltiplas de 8, aplica-se padding replicando os valores da borda. Isso garante que a imagem possa ser dividida integralmente em blocos de 8\times8 pixels, tamanho padrão do JPEG\@.
+A imagem original é convertida para valores do tipo double e, caso suas dimensões não sejam múltiplas de 8, aplica-se padding replicando os valores da borda. Isso garante que a imagem possa ser dividida integralmente em blocos de \numproduct{8x8} pixels, tamanho padrão do \jpeg\@.
 
-\subsubsection{Transformada Discreta do Cosseno (DCT)}{}
-Após a divisão em blocos, é aplicada a DCT bidimensional em cada bloco. Essa transformada converte a informação espacial da imagem em componentes de frequência, concentrando grande parte da energia nos primeiros coeficientes.
+\subsubsection{\acrfull{dct}}{}
+Após a divisão em blocos, é aplicada a \dct\ bidimensional em cada bloco. Essa transformada converte a informação espacial da imagem em componentes de frequência, concentrando grande parte da energia nos primeiros coeficientes.
 
 \subsubsection{Quantização}
-Cada bloco transformado é quantizado utilizando uma matriz de quantização padrão do JPEG, escalada por um fator Q, que controla a intensidade da compressão. Valores maiores de Q provocam quantização mais agressiva e, portanto, maior perda de informação e maior taxa de compressão.
+Cada bloco transformado é quantizado utilizando uma matriz de quantização padrão do \jpeg{}, escalada por um fator Q, que controla a intensidade da compressão. Valores maiores de Q provocam quantização mais agressiva e, portanto, maior perda de informação e maior taxa de compressão.
 
 \subsubsection{Reconstrução (Descompressão)}
-Para reconstruir a imagem comprimida, os coeficientes quantizados são de-quantizados (multiplicação pela matriz), e a Transformada Discreta do Cosseno inversa (IDCT) é aplicada aos blocos, retornando ao domínio espacial.
+Para reconstruir a imagem comprimida, os coeficientes quantizados são de-quantizados (multiplicação pela matriz), e a \acrfull{idct} é aplicada aos blocos, retornando ao domínio espacial.
 
 \subsubsection{Cálculo das métricas}
 Dois indicadores foram utilizados para avaliar os resultados:
 \begin{itemize}
     \item Taxa de compressão: estimada considerando a proporção entre o número total de coeficientes e o número de coeficientes não nulos após a quantização.
-    \item PSNR (Peak Signal-to-Noise Ratio): mede a similaridade entre a imagem original e a reconstruída; valores maiores indicam menor perda de qualidade.
+    \item \acrfull{psnr}: mede a similaridade entre a imagem original e a reconstruída; valores maiores indicam menor perda de qualidade.
 \end{itemize}
 
 \subsection{Código}
@@ -40,11 +40,11 @@ A compressão foi aplicada utilizando quatro valores diferentes para o fator de 
 
 \subsubsection{Imagens resultantes}
 \begin{center}
-\begin{tabular}{ |c|c|c| }
+\begin{tabular}{@{}|c|S|S|@{}}
     \hline
     \multicolumn{3}{|c|}{Imagem 1: borboleta.jpg} \\
     \hline
-    Q  & Taxa de Compressão & PSNR (dB) \\
+    Q  & {Taxa de Compressão} & {\psnr{} (\unit{\dB})} \\
     \hline
     2  & 11.89 & 31.95 \\
     \hline
@@ -58,38 +58,43 @@ A compressão foi aplicada utilizando quatro valores diferentes para o fator de 
 \end{center}
 
 
-Imagem 2: raposa.jpg
-Q
-Taxa de Compressão
-PSNR (dB)
-2
-12.55
-29.38
-4
-20.58
-27.80
-8
-34.36
-26.03
-16
-52.65
-23.65
+\begin{center}
+\begin{tabular}{@{}|c|S|S|@{}}
+    \hline
+    \multicolumn{3}{|c|}{Imagem 2: raposa.jpg} \\
+    \hline
+    Q  & {Taxa de Compressão} & {\psnr{} (\unit{\dB})} \\
+    \hline
+    2  & 12.55 & 29.38 \\
+    \hline
+    4  & 20.58 & 27.80 \\
+    \hline
+    8  & 34.36 & 26.03 \\
+    \hline
+    16 & 52.65 & 23.65 \\
+    \hline
+\end{tabular}
+\end{center}
 
 
 \subsection{Análise dos Resultados}
 
 Os testes realizados mostram claramente a relação entre o fator de quantização e a qualidade final da imagem:
 
-Q baixo (ex.: Q = 2): Quando a quantização é fraca, a perda de informação é pequena. As duas imagens apresentaram PSNR acima de 29 dB, indicando boa preservação visual. A taxa de compressão, porém, permanece relativamente modesta (cerca de 12%).
+\begin{itemize}
+    \item \textbf{Q baixo (ex.: Q = 2)}: Quando a quantização é fraca, a perda de informação é pequena. As duas imagens apresentaram \psnr{} acima de \qty{29}{\dB}, indicando boa preservação visual. A taxa de compressão, porém, permanece relativamente modesta (cerca de \qty{12}{\percent}).
+    \item \textbf{Q intermediário (Q = 4 e 8)}: À medida que o Q aumenta, mais coeficientes da \dct{} são aproximados para zero, o que reduz o tamanho dos dados. As taxas aumentam para cerca de \qty{20}{\percent} e depois para mais de \qty{30}{\percent}, ao custo de uma queda gradual no \psnr\@. Nessa faixa, os primeiros artefatos típicos do \jpeg{} começam a aparecer, especialmente blocagem em áreas com pouca textura.
+    \item \textbf{Q alto (Q = 16)}: A compressão torna-se bastante agressiva: as taxas ultrapassam \qty{50}{\percent}, ou seja, mais da metade dos coeficientes se tornam nulos. Consequentemente, a qualidade se degrada mais intensamente, com \psnr{} entre \qtylist{23;24}{\dB}, valores que normalmente já representam perda de detalhes e blocos visíveis.
 
-Q intermediário (Q = 4 e 8): À medida que o Q aumenta, mais coeficientes da DCT são aproximados para zero, o que reduz o tamanho dos dados. As taxas aumentam para cerca de 20% e depois para mais de 30%, ao custo de uma queda gradual no PSNR. Nessa faixa, os primeiros artefatos típicos do JPEG começam a aparecer, especialmente blocagem em áreas com pouca textura.
-
-Q alto (Q = 16): A compressão torna-se bastante agressiva: as taxas ultrapassam 50%, ou seja, mais da metade dos coeficientes se tornam nulos. Consequentemente, a qualidade se degrada mais intensamente, com PSNR entre 23 e 24 dB, valores que normalmente já representam perda de detalhes e blocos visíveis.
+\end{itemize}
 Comparando as duas imagens, nota-se que:
-A Imagem 1 mantém valores de PSNR ligeiramente superiores em todos os níveis de compressão, sugerindo que sua estrutura visual é mais adequada ao modelo JPEG.
 
+\begin{itemize}
+    \item A \textbf{Imagem 1} mantém valores de \psnr{} ligeiramente superiores em todos os níveis de compressão, sugerindo que sua estrutura visual é mais adequada ao modelo \jpeg\@.
 
-A Imagem 2 apresenta queda de qualidade um pouco mais acentuada, indicando sensibilidade maior à quantização, possivelmente por conter áreas suaves ou gradientes que são mais afetados por perdas nas altas frequências.
-No geral, os resultados confirmam o comportamento esperado do algoritmo JPEG\@: mais compressão → mais perda → menor PSNR, com artefatos cada vez mais perceptíveis.
+    \item A \textbf{Imagem 2} apresenta queda de qualidade um pouco mais acentuada, indicando sensibilidade maior à quantização, possivelmente por conter áreas suaves ou gradientes que são mais afetados por perdas nas altas frequências.
+\end{itemize}
+
+No geral, os resultados confirmam o comportamento esperado do algoritmo \jpeg\@: mais compressão \rightarrow{} mais perda \rightarrow{} menor \psnr{}, com artefatos cada vez mais perceptíveis.
 
 \end{document}

@@ -1,4 +1,4 @@
-q1;
+mkdir('.out');
 
-imwrite(imread('cat.png'), '.out/cat.png');
-imwrite(imread('hamster.png'), '.out/hamster.png');
+imwrite(imread('raposa.jpg'), '.out/raposa.png');
+imwrite(imread('borboleta.jpg'), '.out/borboleta.png');

@@ -16,6 +16,8 @@
 \usepackage[nottoc,numbib]{tocbibind} % For making the bibliography appear in the table of contents
 \usepackage{titlesec} % For paragraph to behave like sub-sub-sub-section
 
+\usepackage[acronym,toc]{glossaries}
+
 \usepackage{amstext}
 \usepackage{amsmath}
 
@@ -24,6 +26,7 @@
 \usepackage{subcaption}
 \usepackage{xparse}
 \usepackage{calc}
+\usepackage{siunitx}
 
 %% Pretty code
 \usepackage{listings}   % For adding text files
@@ -166,3 +169,16 @@
 {\normalfont\normalsize\bfseries}{\theparagraph}{1em}{}
 \titlespacing*{\paragraph}
 {0pt}{3.25ex plus 1ex minus .2ex}{1.5ex plus .2ex}
+
+
+\makeglossaries
+
+\newacronym{jpeg}{JPEG}{Joint Photographic Experts Group}
+\newacronym{psnr}{PSNR}{Peak Signal-to-Noise Ratio}
+\newacronym{dct}{DCT}{Discrete Cosine Transform}
+\newacronym{idct}{IDCT}{Inverse Discrete Cosine Transform}
+
+\newcommand{\idct}{\acrshort{idct}}
+\newcommand{\dct}{\acrshort{dct}}
+\newcommand{\psnr}{\acrshort{psnr}}
+\newcommand{\jpeg}{\acrshort{jpeg}}
