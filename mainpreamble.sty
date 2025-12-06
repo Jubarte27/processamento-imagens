@@ -20,6 +20,7 @@
 
 \usepackage{amstext}
 \usepackage{amsmath}
+\usepackage{braket}
 
 \usepackage{float}
 \usepackage{caption}
@@ -27,6 +28,7 @@
 \usepackage{xparse}
 \usepackage{calc}
 \usepackage{siunitx}
+\usepackage{etoolbox}
 
 %% Pretty code
 \usepackage{listings}   % For adding text files
@@ -37,6 +39,24 @@
 \definecolor{codegray}{rgb}{0.5,0.5,0.5}
 \definecolor{codepurple}{rgb}{0.58,0,0.82}
 \definecolor{backcolor}{rgb}{0.95,0.95,0.92}
+
+\ExplSyntaxOn
+% package level definitions
+\seq_new:N \l__morbusg_left_seq
+\seq_new:N \l__morbusg_right_seq
+% public package interface command
+\cs_new:Npn \morbusg_zip:Nnnnn #1 #2 #3 #4 #5 {
+  \seq_set_split:Nnn \l__morbusg_left_seq   { #2 } { #3 }
+  \seq_set_split:Nnn \l__morbusg_right_seq { #4 } { #5 }
+  \seq_mapthread_function:NNN \l__morbusg_left_seq \l__morbusg_right_seq #1
+}
+% xparse interface
+\NewDocumentCommand{\zip}{ m O{,} m o m }
+    { \IfNoValueTF {#4}
+        { \morbusg_zip:Nnnnn #1 {#2} {#3} {#2} {#5} }
+        { \morbusg_zip:Nnnnn #1 {#2} {#3} {#4} {#5} }
+    }
+\ExplSyntaxOff
 
 
 \newlength{\imgwidth}
@@ -153,6 +173,38 @@
     \end{figure}
 }
 
+\newlength{\ourwidth}
+\newtoggle{isright}% starts false, meaning left
+\clist_new:N \namesoffiguresderived
+\clist_new:N \descoffiguresderived
+\newcommand{\figuresderived}[6]{
+    \filename@parse{#1}
+    \let\file_dir\filename@area
+    \let\file_name\filename@base
+    \let\file_ext\filename@ext
+
+    \DeclareDocumentCommand{\makefigure}{m m}{
+        \setlength{\ourwidth}{(\textwidth-.5em)/2}%
+
+        \begin{subcaptionblock}{\ourwidth}
+            \centering
+            \scalegraphics{.out/\file_dir\file_name##1.\file_ext}
+            \caption{##2}
+        \end{subcaptionblock}%
+
+        \iftoggle{isright}{\vskip .5em}{\hskip .5em}
+        \settoggle{isright}{\iftoggle{isright}{false}{true}}
+    }
+    \begin{figure}[H]
+        \centering
+        \zip{\makefigure}{#2}{#3}
+        \vskip 0em
+        \caption{#4}
+        \label{fig:#5}
+    \end{figure}
+}
+\makeatother
+
 \ExplSyntaxOff
 
 % \lstset{style=Matlab-bw} %% Melhor para imprimir
@@ -182,3 +234,13 @@
 \newcommand{\dct}{\acrshort{dct}}
 \newcommand{\psnr}{\acrshort{psnr}}
 \newcommand{\jpeg}{\acrshort{jpeg}}
+
+\sisetup{
+    reset-text-family = false ,
+    reset-text-series = false ,
+    reset-text-shape = false ,
+    propagate-math-font = true ,
+    reset-math-version = false ,
+    text-family-to-math = true ,
+    text-series-to-math = true
+}

@@ -1,6 +1,4 @@
-adicao_de_ruido();
-maina();
-mainb();
+mkdir('.out');
 
 imwrite(imread('borboleta.jpg'), '.out/borboleta.png');
 imwrite(imread('raposa.jpg'), '.out/raposa.png');

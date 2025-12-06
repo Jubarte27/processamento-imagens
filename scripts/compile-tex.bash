@@ -92,10 +92,12 @@ remove_aux_files() {
 
 run() {
     if [[ "$use_docker" == true ]]; then
-        run_docker "$@" && return;
+        run_docker "$@";
+        return;
     fi
 
-    (cd "$MAIN_DIR" && "$@") && return
+    (cd "$MAIN_DIR" && "$@");
+    return
 }
 
 latexmk_compile() {
