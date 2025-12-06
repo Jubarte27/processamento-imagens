@@ -4,94 +4,97 @@
 \begin{document}
 
 \section{Compressão baseada na quantização vetorial}
-Nesta etapa do trabalho, foi implementada uma técnica de compressão baseada em quantização vetorial (VQ). Esse método consiste em dividir a imagem em blocos de dimensões fixas, agrupar blocos similares por meio do algoritmo K-Means, e substituir cada bloco da imagem por um índice que referencia um bloco representativo dentro de um codebook.
+Nesta etapa do trabalho, foi implementada uma técnica de compressão baseada em \textbf{quantização vetorial (\vq)}. Esse método consiste em dividir a imagem em blocos de dimensões fixas, agrupar blocos similares por meio do algoritmo \textbf{K-Means}, e substituir cada bloco da imagem por um índice que referencia um bloco representativo dentro de um codebook.
 
-O processo foi aplicado a quatro imagens: duas em tons de cinza (doca e cachorro) e duas coloridas (borboleta e raposa). Para cada imagem, foram testados dois tamanhos de blocos: 2\times2 e 3\times3. Em todos os casos, o codebook é composto por 256 vetores, conforme solicitado no enunciado. 
+O processo foi aplicado a quatro imagens: duas em tons de cinza (\textbf{doca} e \textbf{cachorro}) e duas coloridas (\textbf{borboleta} e \textbf{raposa}). Para cada imagem, foram testados dois tamanhos de blocos: \textbf{\numproduct{2x2}} e \textbf{\numproduct{3x3}}. Em todos os casos, o codebook é composto por \textbf{\num{256} vetores}, conforme solicitado no enunciado. 
 
 \subsection{Metodologia}
 O método foi dividido nas seguintes etapas:
 
 \subsubsection{Formação dos blocos}
-A imagem é percorrida em blocos não sobrepostos, de tamanho 2\times2 ou 3\times3. Cada bloco é convertido em um vetor coluna. No caso de imagens coloridas, esse processo é feito por canal (R,G,B).
+A imagem é percorrida em blocos \textbf{não sobrepostos}, de tamanho \numproduct{2x2} ou \numproduct{3x3}. Cada bloco é convertido em um vetor coluna. No caso de imagens coloridas, esse processo é feito \textbf{por canal (R,G,B)}.
 
 \subsubsection{Construção do Codebook (K-Means)}
-Coletamos uma amostra dos blocos da imagem e aplicamos o algoritmo K-Means para agrupá-los em 256 grupos. O centro de cada cluster torna-se uma palavra do codebook.
+Coletamos uma amostra dos blocos da imagem e aplicamos o algoritmo \textbf{K-Means} para agrupá-los em \num{256} grupos. O centro de cada cluster torna-se uma \textbf{palavra do codebook}.
 
 \subsubsection{Compressão}
-Cada bloco da imagem é substituído por um índice inteiro entre 1 e 256, correspondente ao bloco mais próximo do codebook. A imagem comprimida contém: o codebook e a matriz de índices.
+Cada bloco da imagem é substituído por \textbf{um índice inteiro entre \numlist{1;256}}, correspondente ao bloco mais próximo do codebook. A imagem comprimida contém: o codebook e a matriz de índices.
 
 \subsubsection{Reconstrução}
 A imagem é reconstituída substituindo cada índice pelo bloco correspondente no codebook. Para imagens coloridas, a operação é feita separadamente para os três canais.
 
 \subsubsection{Métricas}
 Foram calculados:
-Taxa de compressão = bits da imagem original / bits da representação VQ
-PSNR, comparando a imagem reconstruída com a original
+\begin{itemize}
+    \item \textbf{Taxa de compressão} = bits da imagem original / bits da representação \vq{}
+    \item \textbf{\psnr{}}, comparando a imagem reconstruída com a original
+\end{itemize}
 
 \subsection{Código}
 
-
+\lstinputlisting{vq_color.m}
+\lstinputlisting{vq_gray.m}
+\lstinputlisting{main_vq.m}
 
 
 \subsection{Resultados Obtidos}
-Os valores de taxa de compressão e PSNR obtidos estão apresentados nas tabelas a seguir.
+Os valores de \textbf{taxa de compressão} e \textbf{\psnr{}} obtidos estão apresentados nas tabelas a seguir.
 
-Imagens em tons de cinza
-Imagem
-Bloco
-Taxa
-PSNR (dB)
-doca
-2x2
-3.76
-36.73
-cachorro
-2x2
-3.76
-38.04
-doca
-3x3
-6.76
-33.47
-cachorro
-3x3
-6.76
-35.23
+\begin{center}
+\begin{tabular}{@{}|c|c|c|c|@{}}
+    \hline
+    \multicolumn{4}{|c|}{Imagens em tons de cinza} \\
+    \hline
+    Bloco & Imagem & {Taxa de Compressão} & {\psnr{} (\unit{\dB})} \\
+    \hline
 
+    \multirow{2}{*}{\numproduct{2x2}}
+    \input{.out/doca_2.results} \\
+    \cline{2-4}
 
+    \input{.out/cachorro_2.results} \\
+    \hline
 
-Imagens coloridas
-Imagem
-Bloco
-Taxa
-PSNR (dB)
-borboleta
-2x2
-3.63
-33.75
-raposa
-2x2
-3.63
-34.82
-borboleta
-3x3
-5.89
-30.43
-raposa
-3x3
-5.89
-31.23
+    \multirow{2}{*}{\numproduct{3x3}}
+    \input{.out/doca_3.results} \\
+    \cline{2-4}
 
-	
+    \input{.out/cachorro_3.results} \\
+    \hline
+\end{tabular}
+\end{center}
 
+\begin{center}
+\begin{tabular}{@{}|c|c|S|S|@{}}
+    \hline
+    \multicolumn{4}{|c|}{Imagens coloridas} \\
+    \hline
+    Bloco & Imagem & {Taxa de Compressão} & {\psnr{} (\unit{\dB})} \\
+    \hline
+
+    \multirow{2}{*}{\numproduct{2x2}}
+    & borboleta & 3.63 & 33.75 \\
+    \cline{2-4}
+
+    & raposa & 3.63 & 34.82 \\
+    \hline
+
+    \multirow{2}{*}{\numproduct{3x3}}
+    & borboleta & 5.89 & 30.43 \\
+    \cline{2-4}
+
+    & raposa & 5.89 & 31.23 \\
+    \hline
+\end{tabular}
+\end{center}
 
 \subsection{Análise dos Resultados}
-Os resultados mostram claramente que o tamanho do bloco utilizado na VQ influencia diretamente a qualidade da reconstrução e a taxa de compressão. Com blocos de 2\times2, a imagem é dividida em partes menores e mais detalhadas, o que permite uma representação mais precisa pelos vetores do codebook. Por isso, as reconstruções apresentam valores de PSNR mais altos, indicando melhor qualidade visual, embora a taxa de compressão seja menor.
+Os resultados mostram claramente que o tamanho do bloco utilizado na \vq{} influencia diretamente a qualidade da reconstrução e a taxa de compressão. Com blocos de \numproduct{2x2}, a imagem é dividida em partes menores e mais detalhadas, o que permite uma representação mais precisa pelos vetores do codebook. Por isso, as reconstruções apresentam valores de \psnr{} mais altos, indicando melhor qualidade visual, embora a taxa de compressão seja menor.
 
-Quando blocos de 3\times3 são utilizados, ocorre o inverso: como a imagem passa a ter menos blocos, a quantidade total de índices diminui e a taxa de compressão aumenta. No entanto, blocos maiores costumam reunir regiões com mais variação interna, o que prejudica a fidelidade da reconstrução e reduz o PSNR. Assim, confirma-se o trade-off esperado: blocos menores preservam a qualidade, enquanto blocos maiores privilegiam a compressão.
+Quando blocos de \numproduct{3x3} são utilizados, ocorre o inverso: como a imagem passa a ter menos blocos, a quantidade total de índices diminui e a taxa de compressão aumenta. No entanto, blocos maiores costumam reunir regiões com mais variação interna, o que prejudica a fidelidade da reconstrução e reduz o \psnr{}. Assim, confirma-se o trade-off esperado: blocos menores preservam a qualidade, enquanto blocos maiores privilegiam a compressão.
 
-Ao comparar imagens em tons de cinza com imagens coloridas, nota-se que as coloridas apresentam PSNR um pouco menor. Isso acontece porque cada canal (R, G e B) é quantizado separadamente, e as pequenas perdas de cada componente acabam se somando no resultado final. Mesmo assim, as taxas de compressão obtidas foram semelhantes às das imagens em cinza.
+Ao comparar imagens em tons de cinza com imagens coloridas, nota-se que as coloridas apresentam \psnr{} um pouco menor. Isso acontece porque cada canal (R, G e B) é quantizado separadamente, e as pequenas perdas de cada componente acabam se somando no resultado final. Mesmo assim, as taxas de compressão obtidas foram semelhantes às das imagens em cinza.
 
-Em resumo, os experimentos mostram exatamente o comportamento previsto pela teoria da VQ: blocos menores resultam em maior qualidade reconstruída, enquanto blocos maiores aumentam a compressão, porém com maior perda visual.
+Em resumo, os experimentos mostram exatamente o comportamento previsto pela teoria da \vq{}: blocos menores resultam em maior qualidade reconstruída, enquanto blocos maiores aumentam a compressão, porém com maior perda visual.
 
 \end{document}

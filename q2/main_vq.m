@@ -1,6 +1,6 @@
 clear all; close all; clc;
 
-gray_imgs = {'doca.jpg', 'cachorro.jpg'};
+gray_imgs = {'.out/doca.png', '.out/cachorro.png'};
 color_imgs = {'borboleta.jpg', 'raposa.jpg'};
 
 B_values = [2 3];
@@ -20,21 +20,23 @@ for b = 1:length(B_values)
         end
 
         img = double(img);
-        img = imresize(img, [256 256]); 
 
         [rec, ratio, psnr_val] = vq_gray(img, B);
 
         disp(['Cinza | ' gray_imgs{i} ...
-              ' | B=' num2str(B) ...
-              ' | TAXA=' num2str(ratio,'%.2f') ...
-              ' | PSNR=' num2str(psnr_val,'%.2f')]);
+                  ' | B=' num2str(B) ...
+                  ' | TAXA=' num2str(ratio, '%.2f') ...
+                  ' | PSNR=' num2str(psnr_val, '%.2f')]);
 
-        subplot(2,2,i);
+        subplot(2, 2, i);
         imshow(uint8(img));
 
-        subplot(2,2,i+2);
+        subplot(2, 2, i + 2);
         imshow(uint8(rec));
+
+        record(gray_imgs{i}, rec, B, ratio, psnr_val)
     end
+
 end
 
 % IMAGENS COLORIDAS
@@ -47,19 +49,21 @@ for b = 1:length(B_values)
 
         img = imread(color_imgs{i});
         img = double(img);
-        img = imresize(img, [200 200]);
 
         [rec, ratio, psnr_val] = vq_color(img, B);
 
         disp(['Color | ' color_imgs{i} ...
-              ' | B=' num2str(B) ...
-              ' | TAXA=' num2str(ratio,'%.2f') ...
-              ' | PSNR=' num2str(psnr_val,'%.2f')]);
+                  ' | B=' num2str(B) ...
+                  ' | TAXA=' num2str(ratio, '%.2f') ...
+                  ' | PSNR=' num2str(psnr_val, '%.2f')]);
 
-        subplot(2,2,i);
+        subplot(2, 2, i);
         imshow(uint8(img));
 
-        subplot(2,2,i+2);
+        subplot(2, 2, i + 2);
         imshow(uint8(rec));
+
+        record(color_imgs{i}, rec, B, ratio, psnr_val)
     end
+
 end

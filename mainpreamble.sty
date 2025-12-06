@@ -5,6 +5,7 @@
 \usepackage{authblk}
 
 \usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
 \usepackage{graphicx} % Required for inserting images
 \usepackage{float}  % Allows use of [H] float placement
 \usepackage[brazilian]{babel}   %   pt-br
@@ -12,9 +13,11 @@
 \usepackage{booktabs}   % For \toprule, \midrule, \bottomrule, \addlinespace
 \usepackage[left=3cm,right=3cm]{geometry} % Increase horizontal margins
 \usepackage{tabularx}   % For automatic column wrapping to text width
+\usepackage{multirow}
 \usepackage{hyperref}   % For \url and hyperlinks
 \usepackage[nottoc,numbib]{tocbibind} % For making the bibliography appear in the table of contents
 \usepackage{titlesec} % For paragraph to behave like sub-sub-sub-section
+\usepackage{lmodern}
 
 \usepackage[acronym,toc]{glossaries}
 
@@ -113,6 +116,7 @@
         \label{fig:#6}
     \end{figure}
 }
+\ExplSyntaxOff
 
 \newcommand{\twofiguresnoupscale}[6]{
 \begin{figure}[H]
@@ -133,6 +137,7 @@
 \end{figure}
 }
 
+\ExplSyntaxOn
 \newlength{\firstimgwidth}
 \newlength{\secondimgwidth}
 \clist_new:N \l_figures_names_no_upscale
@@ -172,7 +177,10 @@
         \label{fig:#6}
     \end{figure}
 }
+\ExplSyntaxOff
 
+
+\ExplSyntaxOn
 \newlength{\ourwidth}
 \newtoggle{isright}% starts false, meaning left
 \clist_new:N \namesoffiguresderived
@@ -225,15 +233,31 @@
 
 \makeglossaries
 
-\newacronym{jpeg}{JPEG}{Joint Photographic Experts Group}
-\newacronym{psnr}{PSNR}{Peak Signal-to-Noise Ratio}
-\newacronym{dct}{DCT}{Discrete Cosine Transform}
-\newacronym{idct}{IDCT}{Inverse Discrete Cosine Transform}
+% \ExplSyntaxOn
+% \str_new:N \makeacronym_name
+% % makes an acronym (eg.:JPEG) thtat will be identified by it's name in lowercase (eg.: jpeg) and create an alias to \acrshort in its lowercase name (eg.:\jpeg)
+% \newcommand{\makeacronym}[2]{
+%     \str_set:Ne \makeacronym_name {\str_lowercase:n{#1}}
+%     \newacronym{\str_use:N \makeacronym_name}{#1}{#2}
+%     \csdef{\str_use:N \makeacronym_name}}{\acrshort{\str_use:N \makeacronym_name}}
+% }
+% \ExplSyntaxOff
 
-\newcommand{\idct}{\acrshort{idct}}
-\newcommand{\dct}{\acrshort{dct}}
-\newcommand{\psnr}{\acrshort{psnr}}
+
+\newacronym{jpeg}{JPEG}{Joint Photographic Experts Group}
 \newcommand{\jpeg}{\acrshort{jpeg}}
+
+\newacronym{psnr}{PSNR}{Peak Signal-to-Noise Ratio}
+\newcommand{\psnr}{\acrshort{psnr}}
+
+\newacronym{dct}{DCT}{Discrete Cosine Transform}
+\newcommand{\dct}{\acrshort{dct}}
+
+\newacronym{idct}{IDCT}{Inverse Discrete Cosine Transform}
+\newcommand{\idct}{\acrshort{idct}}
+
+\newacronym{vq}{VQ}{Vector Quantization}
+\newcommand{\vq}{\acrshort{vq}}
 
 \sisetup{
     reset-text-family = false ,
@@ -244,3 +268,41 @@
     text-family-to-math = true ,
     text-series-to-math = true
 }
+
+\ExplSyntaxOn
+\makeatletter
+\ior_new:N \pin@file
+\newcounter{pinlineno}
+\newcommand\pin@accu{}
+\newcommand\pin@ext{pintmp}
+% inputs #3, selecting only lines #1 to #2 (inclusive)
+\newcommand*\partialinput [3] {%
+  \IfFileExists{#3}{%
+    \ior_open:Nn \pin@file {#3}
+    % skip lines 1 to #1 (exclusive)
+    \setcounter{pinlineno}{1}
+    \@whilenum\value{pinlineno}<#1 \do{%
+      \ior_str_get:NN \pin@file \pin@line%
+      \stepcounter{pinlineno}%
+    }
+    % prepare reading lines #1 to #2 inclusive
+    \addtocounter{pinlineno}{-1}
+    \let\pin@accu\empty
+    \begingroup
+    \endlinechar\newlinechar
+    \@whilenum\value{pinlineno}<#2 \do{%
+      \ior_str_get:NN \pin@file \pin@line%
+      \edef\pin@accu{\pin@accu\pin@line}%
+      \stepcounter{pinlineno}%
+    }
+    \ior_close:N \pin@file
+    \expandafter\endgroup
+    \scantokens\expandafter{\pin@accu}%
+  }{%
+    \errmessage{File `#3' doesn't exist!}%
+  }%
+}
+\makeatother
+\ExplSyntaxOff
+
+\newcommand{\singlelineinput}[2]{\partialinput{#1}{#1}{#2}}

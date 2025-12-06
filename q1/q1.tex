@@ -24,8 +24,8 @@ Para reconstruir a imagem comprimida, os coeficientes quantizados são de-quanti
 \subsubsection{Cálculo das métricas}
 Dois indicadores foram utilizados para avaliar os resultados:
 \begin{itemize}
-    \item Taxa de compressão: estimada considerando a proporção entre o número total de coeficientes e o número de coeficientes não nulos após a quantização.
-    \item \acrfull{psnr}: mede a similaridade entre a imagem original e a reconstruída; valores maiores indicam menor perda de qualidade.
+    \item \textbf{Taxa de compressão}: estimada considerando a proporção entre o número total de coeficientes e o número de coeficientes não nulos após a quantização.
+    \item \textbf{\acrfull{psnr}}: mede a similaridade entre a imagem original e a reconstruída; valores maiores indicam menor perda de qualidade.
 \end{itemize}
 
 \subsection{Código}
@@ -98,6 +98,6 @@ Comparando as duas imagens, nota-se que:
     \item A \textbf{Imagem 2} apresenta queda de qualidade um pouco mais acentuada, indicando sensibilidade maior à quantização, possivelmente por conter áreas suaves ou gradientes que são mais afetados por perdas nas altas frequências.
 \end{itemize}
 
-No geral, os resultados confirmam o comportamento esperado do algoritmo \jpeg\@: mais compressão \rightarrow{} mais perda \rightarrow{} menor \psnr{}, com artefatos cada vez mais perceptíveis.
+No geral, os resultados confirmam o comportamento esperado do algoritmo \jpeg\@: \textbf{mais compressão \rightarrow{} mais perda \rightarrow{} menor \psnr{}}, com artefatos cada vez mais perceptíveis.
 
 \end{document}
