@@ -19,6 +19,8 @@
 \usepackage{titlesec} % For paragraph to behave like sub-sub-sub-section
 \usepackage{lmodern}
 
+\usepackage{parskip} % Indentation will not be the default
+
 \usepackage[acronym,toc]{glossaries}
 
 \usepackage{amstext}
@@ -76,12 +78,12 @@
 \begin{subfigure}{.5\textwidth}
   \centering
   \includegraphics[width=.9\linewidth]{#1}
-  \label{fig:#2}
+  \caption{#2}
 \end{subfigure}%
 \begin{subfigure}{.5\textwidth}
   \centering
   \includegraphics[width=.9\linewidth]{#3}
-  \label{fig:#4}
+  \caption{#4}
 \end{subfigure}
 \caption{#5}
 \label{fig:#6}
@@ -185,7 +187,7 @@
 \newtoggle{isright}% starts false, meaning left
 \clist_new:N \namesoffiguresderived
 \clist_new:N \descoffiguresderived
-\newcommand{\figuresderived}[6]{
+\newcommand{\figuresderived}[5]{
     \filename@parse{#1}
     \let\file_dir\filename@area
     \let\file_name\filename@base

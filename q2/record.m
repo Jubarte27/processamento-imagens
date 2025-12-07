@@ -1,5 +1,5 @@
-function record(file_name, img, B, ratio, psnr_val)
-    [~, name, ~] = fileparts(file_name);
+function record(original_file_name, img, B, ratio, psnr_val)
+    [~, name, ~] = fileparts(original_file_name);
     base = strcat('.out/', name, '_', num2str(B));
     imwrite(uint8(img), strcat(base, '.png'));
     

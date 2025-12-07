@@ -40,6 +40,12 @@ Foram calculados:
 \subsection{Resultados Obtidos}
 Os valores de \textbf{taxa de compressão} e \textbf{\psnr{}} obtidos estão apresentados nas tabelas a seguir.
 
+\subsubsection{Imagens originais}
+
+\twofigures{.out/doca.png}{Doca}{.out/cachorro.png}{Cachorro}{Imagens em tons de cinza}{originais_2_cinza}
+\twofigures{.out/borboleta.png}{Borboleta}{.out/raposa.png}{Raposa}{Imagens coloridas}{originais_2_coloridas}
+
+\subsubsection{Imagens resultantes}
 \begin{center}
 \begin{tabular}{@{}|c|c|c|c|@{}}
     \hline
@@ -73,20 +79,23 @@ Os valores de \textbf{taxa de compressão} e \textbf{\psnr{}} obtidos estão apr
     \hline
 
     \multirow{2}{*}{\numproduct{2x2}}
-    & borboleta & 3.63 & 33.75 \\
+    \input{.out/borboleta_2.results} \\
     \cline{2-4}
-
-    & raposa & 3.63 & 34.82 \\
+    \input{.out/raposa_2.results} \\
     \hline
 
     \multirow{2}{*}{\numproduct{3x3}}
-    & borboleta & 5.89 & 30.43 \\
+    \input{.out/borboleta_3.results} \\
     \cline{2-4}
-
-    & raposa & 5.89 & 31.23 \\
+    \input{.out/raposa_3.results} \\
     \hline
 \end{tabular}
 \end{center}
+
+\figuresderived{doca.png}{\_2,\_3}{{Bloco \numproduct{2x2}},{Bloco \numproduct{3x3}}}{Resultado da aplicação na imagem doca}{docavetorial}
+\figuresderived{cachorro.png}{\_2,\_3}{{Bloco \numproduct{2x2}},{Bloco \numproduct{3x3}}}{Resultado da aplicação na imagem cachorro}{cachorrovetorial}
+\figuresderived{borboleta.png}{\_2,\_3}{{Bloco \numproduct{2x2}},{Bloco \numproduct{3x3}}}{Resultado da aplicação na imagem borboleta}{borboletavetorial}
+\figuresderived{raposa.png}{\_2,\_3}{{Bloco \numproduct{2x2}},{Bloco \numproduct{3x3}}}{Resultado da aplicação na imagem raposa}{raposavetorial}
 
 \subsection{Análise dos Resultados}
 Os resultados mostram claramente que o tamanho do bloco utilizado na \vq{} influencia diretamente a qualidade da reconstrução e a taxa de compressão. Com blocos de \numproduct{2x2}, a imagem é dividida em partes menores e mais detalhadas, o que permite uma representação mais precisa pelos vetores do codebook. Por isso, as reconstruções apresentam valores de \psnr{} mais altos, indicando melhor qualidade visual, embora a taxa de compressão seja menor.

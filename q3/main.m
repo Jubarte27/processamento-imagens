@@ -32,6 +32,7 @@ for k = 1:length(K_values)
     subplot(1, length(K_values), k);
     imshow(seg, []);
     title(['K-means K = ' num2str(K)]);
+    record('borboleta_K.jpg', seg, K);
 end
 
 
@@ -48,6 +49,7 @@ for k = 1:length(K_values)
     subplot(1, length(K_values), k);
     imshow(seg, []);
     title(['Gabor K = ' num2str(K)]);
+    record('borboleta_G.jpg', seg, K);
 end
 
 
@@ -65,6 +67,7 @@ for k = 1:length(K_values)
     subplot(1, length(K_values), k);
     imshow(seg, []);
     title(['K-means K = ' num2str(K)]);
+    record('raposa_K.jpg', seg, K);
 end
 
 
@@ -81,4 +84,5 @@ for k = 1:length(K_values)
     subplot(1, length(K_values), k);
     imshow(seg, []);
     title(['Gabor K = ' num2str(K)]);
+    record('raposa_G.jpg', seg, K);
 end

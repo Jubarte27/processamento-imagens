@@ -8,7 +8,7 @@ function seg = segment_kmeans(img, K)
     X = reshape(lab, [], 3);
 
     % k-means
-    idx = kmeans(X, K, 'MaxIter', 200);
+    idx = kmeans(X, K, 'MaxIter', 1000);
 
     % voltar para imagem
     seg = reshape(idx, size(img,1), size(img,2));
