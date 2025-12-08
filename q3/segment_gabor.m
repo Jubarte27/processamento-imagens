@@ -9,7 +9,7 @@ function seg = segment_gabor(img, K)
     deltaTheta = 45;
     orientation = 0:deltaTheta:(180 - deltaTheta);
 
-    g = gabor(wavelength, orientation);
+    g = computeGaborCombinations(wavelength, orientation, 1, 0.5);
 
     Agray = im2gray(img);
     gabormag = gaborFilterFFT(Agray, g);
@@ -29,4 +29,36 @@ function seg = segment_gabor(img, K)
     L = imsegkmeans(featureSet, K);
 
     seg = im2double(L);
+end
+
+function I = im2gray(RGB)
+    if (ndims(RGB) == 3)
+        I = rgb2gray(RGB);
+    else
+        I = RGB;
+    end
+end
+
+function resultsOut = computeGaborCombinations(lambda, theta, bandwidth, spatialAspectRatio)
+    [lambda, theta, bandwidth, spatialAspectRatio] = ndgrid(lambda, theta, bandwidth, spatialAspectRatio);
+
+    lambda = lambda(:);
+    theta = theta(:);
+    bandwidth = bandwidth(:);
+    spatialAspectRatio = spatialAspectRatio(:);
+
+    s = ones(1, size(lambda, 1));
+
+    lambda = mat2cell(lambda, s);
+    theta = mat2cell(theta, s);
+    bandwidth = mat2cell(bandwidth, s);
+    spatialAspectRatio = mat2cell(spatialAspectRatio, s);
+
+    resultsOut = struct(...
+        'Wavelength', lambda, ...
+        'Orientation', theta, ...
+        'SpatialFrequencyBandwidth', bandwidth, ...
+        'SpatialAspectRatio', spatialAspectRatio ...
+);
+
 end

@@ -1,7 +1,7 @@
 clear all; close all; clc;
 
 imgs = {'borboleta.jpg', 'raposa.jpg'};
-K_values = [2 3 4];   % valores de K a testar
+K_values = [3];   % valores de K a testar
 
 %% ============================
 %  JANELA 1: IMAGENS ORIGINAIS
