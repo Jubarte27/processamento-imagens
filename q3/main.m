@@ -46,7 +46,10 @@ set(gcf, 'Position', get(0, 'Screensize'));
 
 for k = 1:length(K_values)
     K = K_values(k);
+    profile on
     seg = segment_gabor(img1, K);
+    p = profile('info')
+    profsave
 
     subplot(1, length(K_values), k);
     imshow(seg, []);
@@ -83,7 +86,9 @@ set(gcf, 'Position', get(0, 'Screensize'));
 
 for k = 1:length(K_values)
     K = K_values(k);
-    seg = segment_gabor(img2, K);
+    profile on
+    seg = segment_gabor(img2, K); p = profile('info')
+    profsave
 
     subplot(1, length(K_values), k);
     imshow(seg, []);
