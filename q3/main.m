@@ -1,7 +1,7 @@
 clear all; close all; clc;
 
-imgs = {'borboleta.jpg', 'raposa.jpg'};
-K_values = [3];   % valores de K a testar
+imgs = {'owl.jpg', 'dog.jpg'};
+K_values = [2, 3, 4];   % valores de K a testar
 
 %% ============================
 %  JANELA 1: IMAGENS ORIGINAIS
@@ -40,22 +40,20 @@ K_values = [3];   % valores de K a testar
 %  JANELA 3: BORBOLETA GABOR
 %  ============================
 
-img1 = im2double(imread(imgs{1}));
-figure('Name','Borboleta - Gabor','NumberTitle','off');
-set(gcf, 'Position', get(0, 'Screensize'));
+% img1 = im2double(imread(imgs{1}));
+% figure('Name','Borboleta - Gabor','NumberTitle','off');
+% set(gcf, 'Position', get(0, 'Screensize'));
 
-for k = 1:length(K_values)
-    K = K_values(k);
-    profile on
-    seg = segment_gabor(img1, K);
-    p = profile('info')
-    profsave
+% for k = 1:length(K_values)
+%     K = K_values(k);
 
-    subplot(1, length(K_values), k);
-    imshow(seg, []);
-    title(['Gabor K = ' num2str(K)]);
-    record('borboleta_G.jpg', seg, K);
-end
+%     seg = segment_gabor(img1, K);
+
+%     subplot(1, length(K_values), k);
+%     imshow(seg, []);
+%     title(['Gabor K = ' num2str(K)]);
+%     record('borboleta_G.jpg', seg, K);
+% end
 
 
 %% ============================
@@ -80,18 +78,34 @@ end
 %  JANELA 5: RAPOSA GABOR
 %  ============================
 
-img2 = im2double(imread(imgs{2}));
-figure('Name','Raposa - Gabor','NumberTitle','off');
-set(gcf, 'Position', get(0, 'Screensize'));
+% img2 = im2double(imread(imgs{2}));
+% figure('Name','Raposa - Gabor','NumberTitle','off');
+% set(gcf, 'Position', get(0, 'Screensize'));
 
-for k = 1:length(K_values)
-    K = K_values(k);
-    profile on
-    seg = segment_gabor(img2, K); p = profile('info')
-    profsave
+% for k = 1:length(K_values)
+%     K = K_values(k);
 
-    subplot(1, length(K_values), k);
-    imshow(seg, []);
-    title(['Gabor K = ' num2str(K)]);
-    record('raposa_G.jpg', seg, K);
+%     seg = segment_gabor(img2, K);
+
+%     subplot(1, length(K_values), k);
+%     imshow(seg, []);
+%     title(['Gabor K = ' num2str(K)]);
+%     record('raposa_G.jpg', seg, K);
+% end
+total = length(imgs);
+Is = cell(1,total);
+
+parfor i = 1:total
+    I = imread(imgs{i});
+    seg = segment_gabor(I, 2);
+
+    Is{i} = overlay_labels(I, seg, 0.45);
+end
+
+figure('Name','AAAA','NumberTitle','off', 'Position', get(0, 'Screensize'));
+
+for i = 1:total
+    overlay = Is{i};
+    subplot(1, total, i);
+    imshow(overlay, []);
 end

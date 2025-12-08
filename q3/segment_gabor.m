@@ -1,38 +1,38 @@
 function seg = segment_gabor(img, K)
     [H, W, ~] = size(img);
 
-    wavelengthMin = 4 / sqrt(2); wavelengthMax = hypot(H, W);
+    wavelengthMin = 4 / sqrt(2); 
+    wavelengthMax = hypot(H, W);
     n = floor(log2(wavelengthMax / wavelengthMin));
-    wavelength = 2 .^ (0:(n - 2)) * wavelengthMin;
-    deltaTheta = 45; orientation = 0:deltaTheta:(180 - deltaTheta);
+    wavelengths = 2 .^ (0:(n - 2)) * wavelengthMin;
+    deltaTheta = 45; 
+    orientations = 0:deltaTheta:(180 - deltaTheta);
 
-    g = computeGaborCombinations(wavelength, orientation, 1, 0.5);
-
-    gabormag = gaborFFT(im2gray(img), g);
-
+    g = computeGaborCombinations(wavelengths, orientations, 1, 0.5);
+    [gabormag, ~] = gaborFFT(im2gray(img), g);
+    
     Smoothing = 3;
-    for i = 1:length(g)
-        sigma = 0.5 * g(i).Wavelength;
+    numFilters = length(g);
+    parfor i = 1:numFilters
+        filter_g = g(i); 
+        sigma = 0.5 * filter_g.Wavelength;
+        % Apply Gaussian smoothing
         gabormag(:, :, i) = gauss(gabormag(:, :, i), Smoothing * sigma);
     end
 
-    X = 1:W;
-    Y = 1:H;
-    [X, Y] = meshgrid(X, Y);
-    featureSet = cat(3, gabormag, X, Y);
-
+    X_coords = 1:W;
+    Y_coords = 1:H;
+    [X_map, Y_map] = meshgrid(X_coords, Y_coords);
+    
+    featureSet = cat(3, gabormag, X_map, Y_map);
     seg = segkmeans(featureSet, K);
 end
 
 function Label = segkmeans(I, k)
     [m, n, ~] = size(I);
     X = reshape(I, m * n, []);
-
-    avgChn = mean(X, 1); avgChn = repmat(avgChn, size(X, 1), 1);
-    stdDevChn = std(X, 0, 1); stdDevChn(stdDevChn == 0) = 1; stdDevChn = repmat(stdDevChn, size(X, 1), 1);
-    X = (X - avgChn) ./ stdDevChn;
-
-    Label = kmeans(X, k, 'MaxIter', 1000);
+    X = zscore(X); 
+    Label = kmeans(X, k, 'MaxIter', 1000, 'Replicates', 1); 
     Label = reshape(Label, m, n);
 end
 
@@ -69,51 +69,30 @@ function resultsOut = computeGaborCombinations(lambda, theta, bandwidth, spatial
 end
 
 function [M, P] = gaborFFT(A, GaborBank)
-% Applies a bank of Gabor filters to image A using FFT-based convolution.
-
     outSize = size(A);
-    
-    % Ensure input is a floating-point type for FFT
-    % Use single or double depending on required precision/speed trade-off
     A = double(A); 
 
-    % --- 1. Padding ---
     sizeLargestKernel = findMaximumKernelSize(GaborBank);
-    % Gabor always returns odd length kernels
     padSize = (sizeLargestKernel - 1) / 2;
-    A = padarray(A, padSize, 'replicate', 'both'); % Use 'both' for clarity/safety
+    A = padarray(A, padSize, 'replicate', 'both'); 
     sizeAPadded = size(A);
 
-    % --- 2. FFT and Pre-allocation ---
-    A_fft = fft2(A); % Compute FFT of the padded image
-    
-    % Pre-calculate number of filters and base data type
+    A_fft = fft2(A); 
     numFilters = length(GaborBank);
-    baseClass = class(real(A_fft)); % Should be 'double' or 'single'
     
-    % CRITICAL: Pre-allocate 'out' as a COMPLEX array
-    out = complex(zeros([outSize, numFilters], baseClass));
-
-    % --- 3. Filter Application Loop ---
-    for p = 1:numFilters
+    out = complex(zeros([outSize, numFilters], 'double'));
+    parfor p = 1:numFilters
+        H = makeFrequencyDomainTransferFunction(GaborBank(p), sizeAPadded);
         
-        % H is the frequency domain transfer function (real-valued)
-        H = makeFrequencyDomainTransferFunction(GaborBank(p), sizeAPadded, baseClass);
-        
-        % Filtering: A_fft * H, then Inverse FFT
-        % ifftshift(H) is needed because makeFrequencyDomainTransferFunction 
-        % is typically centered at (0,0) (DC at array center).
         outPadded = ifft2(A_fft .* ifftshift(H)); 
         
-        % The result is generally complex and needs to be stored as such
         outSlice = outPadded(padSize+1:end-padSize, padSize+1:end-padSize);
         out(:, :, p) = outSlice;
 
     end
 
-    % --- 4. Final Output ---
-    M = abs(out); % Magnitude response
-    P = angle(out); % Phase response
+    M = abs(out); % Magnitude
+    P = angle(out); % Phase
 
 end
 
@@ -143,57 +122,32 @@ function kSize = getKernelSize(g)
     kSize = [r, r];
 end
 
-function H = makeFrequencyDomainTransferFunction(g, imageSize, classA)
-% Optimized function to construct the frequency domain transfer function
-% of a Gabor filter.
-    
-    % --- 1. Setup and Frequency Vectors ---
+function H = makeFrequencyDomainTransferFunction(g, imageSize)
     M = imageSize(1);
     N = imageSize(2);
     
-    % Assumes 'createNormalizedFrequencyVector' is an existing function.
-    % M and N correspond to the dimensions of the spatial domain.
-    u = cast(createNormalizedFrequencyVector(N), classA); % Horizontal Freq (cols)
-    v = cast(createNormalizedFrequencyVector(M), classA); % Vertical Freq (rows)
+    u = createNormalizedFrequencyVector(N);
+    v = createNormalizedFrequencyVector(M);
     [U, V] = meshgrid(u, v);
     
-    % --- 2. Rotation and Frequency Constants ---
-    
-    % Pre-calculate trigonometric values for rotation (micro-optimization)
     cosTheta = cosd(g.Orientation);
     sinTheta = sind(g.Orientation);
     
-    % Standard Gabor rotation in the frequency domain
     Uprime = U .* cosTheta - V .* sinTheta;
-    Vprime = U .* sinTheta + V .* cosTheta; % FIX: Changed V .* sind to V .* cosd
+    Vprime = U .* sinTheta + V .* cosTheta;
     
-    S = getSigma(g); % Spatial domain sigma [SigmaX, SigmaY]
+    S = getSigma(g);
     
-    % Frequency domain sigma (spread)
-    % sigmauv = [sigmau, sigmav] = 1 / (2 * pi * S)
-    sigmauv = 1 ./ (2 * pi * S); 
+    sigmauv = 1 ./ (2 * pi * S);
     
-    % Pre-calculate the inverse of the squared frequency-domain sigmas
     sigmauv_sq_inv_1 = 1 / sigmauv(1)^2;
     sigmauv_sq_inv_2 = 1 / sigmauv(2)^2;
     
-    % Bandwidth/Center Frequency
-    freq = 1 / g.Wavelength; % u0
-    
-    % Pre-calculate amplitude factor 'A'
-    A = 2 * pi * S(1) * S(2); % Amplitude factor
-    
-    % --- 3. Shift Uprime and Calculate Transfer Function ---
-    
-    % Shift the center of the Gaussian to the Gabor frequency (u0)
-    Uprime = (Uprime - freq);
-    
-    % Calculate the Gaussian function
-    % G = exp(-0.5 * (u'^2/sigmau^2 + v'^2/sigmav^2))
+    Uprime = (Uprime - 1 / g.Wavelength);
     exponentTerm = Uprime .^ 2 * sigmauv_sq_inv_1 + Vprime .^ 2 * sigmauv_sq_inv_2;
     
+    A = 2 * pi * S(1) * S(2);
     H = A .* exp(-0.5 * exponentTerm);
-
 end
 
 function u = createNormalizedFrequencyVector(N)
@@ -223,35 +177,22 @@ function A = frequencyGaussianFilter(A, sigma, hsize, padding)
     A = double(A);
 
     fftSize = size(A);
+    fftH = fft2(h, fftSize(1), fftSize(2)); 
+    A_fft = fft2(A);
 
-    if ismatrix(A)
-        A = ifft2(fft2(A) .* fft2(h, fftSize(1), fftSize(2)), 'symmetric');
-    else
-        fftH = fft2(h, fftSize(1), fftSize(2));
-
-        dims3toEnd = prod(fftSize(3):fftSize(end));
-
-        %Stack behavior
-        for n = 1:dims3toEnd
-            A(:, :, n) = ifft2(fft2(A(:, :, n), fftSize(1), fftSize(2)) .* fftH, 'symmetric');
-        end
-
-    end
-
+    A_filtered_fft = bsxfun(@times, A_fft, fftH);
+    A = ifft2(A_filtered_fft, 'symmetric'); 
     A = unpadImage(A, outSize);
 end
 
 function h = createGaussianKernel(sigma, hsize)
     filterRadius = (hsize - 1) / 2;
-    % 2-D Gaussian kernel
     [X, Y] = meshgrid(-filterRadius(2):filterRadius(2), -filterRadius(1):filterRadius(1));
     arg = (X .* X) / (sigma(2) * sigma(2)) + (Y .* Y) / (sigma(1) * sigma(1));
 
     h = exp(-arg / 2);
 
-    % Suppress near-zero components
     h(h < eps * max(h(:))) = 0;
-    % Normalize
     sumH = sum(h(:));
     if sumH ~= 0
         h = h ./ sumH;
