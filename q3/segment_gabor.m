@@ -12,7 +12,7 @@ function seg = segment_gabor(img, K)
     g = gabor(wavelength, orientation);
 
     Agray = im2gray(img);
-    gabormag = imgaborfilt(Agray, g);
+    gabormag = gaborFilterFFT(Agray, g);
 
 
     Smoothing = 3;
@@ -26,8 +26,7 @@ function seg = segment_gabor(img, K)
     [X, Y] = meshgrid(X, Y);
     featureSet = cat(3, gabormag, X, Y);
 
-    featureSet = im2single(featureSet);
-    L = imsegkmeans(featureSet, K, 'NormalizeInput', true, 'NumAttempts', 5);
+    L = imsegkmeans(featureSet, K);
 
     seg = im2double(L);
 end

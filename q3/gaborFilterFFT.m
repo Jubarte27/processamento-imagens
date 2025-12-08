@@ -1,17 +1,6 @@
-function [M, P] = gaborFilterFFT(A, GaborBank, displayWaitBar)
-    if (displayWaitBar)
-        waitBar = waitBarFactory(numel(GaborBank));
-        refreshWaitbar(waitBar);
-        % In case of Ctrl+C with graphical waitbar.
-        cleanup_waitbar = onCleanup(@() destroy(waitBar));
-    end
-
+function [M, P] = gaborFilterFFT(A, GaborBank)
     outSize = size(A);
-
-    % Work in double precision floating point unless a is passed in as single.
-    if ~isa(A, 'single')
-        A = double(A);
-    end
+    A = double(A);
 
     sizeLargestKernel = findMaximumKernelSize(GaborBank);
     % Gabor always returns odd length kernels
@@ -26,17 +15,6 @@ function [M, P] = gaborFilterFFT(A, GaborBank, displayWaitBar)
         H = makeFrequencyDomainTransferFunction(GaborBank(p), sizeAPadded, class(A));
         outPadded = ifft2(A .* ifftshift(H));
         out(:, :, p) = unpadSlice(outPadded, padSize, outSize);
-
-        if (displayWaitBar)
-            update(waitBar, p)
-
-            if waitBar.isCancelled
-                M = [];
-                P = [];
-                return
-            end
-
-        end
 
     end
 
@@ -65,34 +43,6 @@ function sizeH = findMaximumKernelSize(GaborBank)
             sizeH = thisKernelSize;
         end
 
-    end
-
-end
-
-function waitBar = waitBarFactory(numIterations)
-
-    dlgName = getString(message('images:imgaborfilt:waitDlgName'));
-
-    if images.internal.isFigureAvailable()
-
-        waitBar = iptui.cancellableWaitbar(dlgName, ...
-            getString(message('images:imgaborfilt:statusFormatter', '%d')), numIterations, 0);
-
-    else
-
-        waitBar = iptui.textWaitUpdater(dlgName, ...
-            getString(message('images:imgaborfilt:statusFormatter', '%d')), numIterations);
-
-    end
-
-end
-
-function u = createNormalizedFrequencyVector(N)
-
-    if mod(N,2)
-        u = linspace(-0.5+1/(2*N),0.5-1/(2*N),N);
-    else
-        u = linspace(-0.5,0.5-1/N,N); 
     end
 
 end

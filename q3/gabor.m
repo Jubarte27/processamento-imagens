@@ -1,108 +1,3 @@
-%gabor Create a Gabor filter.
-%
-%   A gabor object encapsulates the full parameterization of a Gabor filter
-%   and defines quantities of interest when working with Gabor filters. The
-%   gabor class can be used to easily define arrays of gabor objects that
-%   represent Gabor filter banks.
-%
-%   gabor properties (SetAccess = private):
-%      Orientation - Orientation (in degrees)
-%      Wavelength  - Wavelength of sinusoid (in pixels/cycle)
-%      SpatialAspectRatio - Aspect ratio of gaussian in spatial domain
-%      SpatialFrequencyBandwidth - Spatial frequency bandwidth (in octaves)
-%      SpatialKernel - Complex spatial convolution kernel
-%
-%   g = gabor(WAVELENGTH,ORIENTATION) creates a gabor filter array with the
-%   specified wavelength(s) (in pixels/cycle) and orientation(s) (in
-%   degrees). WAVELENGTH describes the wavelength of the sinusoidal
-%   carrier. Valid values for WAVELENGTH are in the range [2, Inf).
-%   ORIENTATION is the orientation of the filter, where the orientation is
-%   defined as the normal direction to the sinusoidal plane wave. Valid
-%   values for ORIENTATON are in the range [0 360]. When WAVELENGTH or
-%   ORIENTATION are vectors, g is an array of gabor objects that contains
-%   all unique combinations of WAVELENGTH and ORIENTATION. For example, if
-%   WAVELENGTH is a vector of length 2 and ORIENTATION is a vector of
-%   length 3, then the output gabor array will be a vector of length 6.
-%
-%   g = gabor(___,Name,Value,___) creates a gabor filter array using
-%   name-value pairs to control aspects of gabor filter design. Each value
-%   may be specified as a vector, in which case the output gabor filter
-%   array g will contain all unique combinations of the input values.
-%
-%   Parameters include:
-%
-%     'SpatialFrequencyBandwidth' -   A numeric vector that defines the
-%                                     spatial-frequency bandwidth in units
-%                                     of octaves. The spatial-frequency
-%                                     bandwidth determines the cutoff of
-%                                     the filter response as frequency
-%                                     content in the input image varies
-%                                     from the preferred frequency,
-%                                     1/WAVELENGTH. Typical values for
-%                                     spatial-frequency bandwidth are in
-%                                     the range [0.5 2.5].
-%
-%                                     Default value: 1.0.
-%
-%     'SpatialAspectRatio' -          A numeric vector that defines the ratio
-%                                     of the semi-major and semi-minor axes
-%                                     of the gaussian envelope:
-%                                     semi-minor/semi-major. This parameter
-%                                     controls the ellipticity of the
-%                                     gaussian envelope. Typical values for
-%                                     spatial aspect ratio are in the range
-%                                     [0.23 0.92].
-%
-%                                     Default value: 0.5.
-%
-%   Notes
-%   -----
-%   The range of ORIENTATION is [0 360] degrees because this class defines
-%   a complex gabor filter in the spatial domain which is not conjugate
-%   symmetric in the frequency domain. If you are only interested in Gabor
-%   magnitude response, the range of ORIENTATION can be restricted to [0
-%   180] degrees.
-%
-%   Example 1
-%   ---------
-%   % This example applies a gabor filter bank of 3 orientations and 2
-%   % different wavelengths to an input image. The magnitude response is
-%   % shown for each filter.
-%
-%   I = imread('cameraman.tif');
-%   gaborBank = gabor([4 8],[0 90]);
-%   gaborMag = imgaborfilt(I,gaborBank);
-%   figure
-%   subplot(2,2,1);
-%   for p = 1:4
-%       subplot(2,2,p)
-%       imshow(gaborMag(:,:,p),[]);
-%       theta = gaborBank(p).Orientation;
-%       lambda = gaborBank(p).Wavelength;
-%       title(sprintf('Orientation=%d, Wavelength=%d',theta,lambda));
-%   end
-%
-%   Example 2
-%   ---------
-%   % Construct a gabor filter array and visualize the real part and
-%   % of the spatial convolution kernel of each gabor filter in the
-%   % array.
-%
-%   g = gabor([5 10],[0 90]);
-%   figure;
-%   subplot(2,2,1)
-%   for p = 1:length(g)
-%       subplot(2,2,p);
-%       imshow(real(g(p).SpatialKernel),[]);
-%       lambda = g(p).Wavelength;
-%       theta  = g(p).Orientation;
-%       title(sprintf('Re[h(x,y)], \\lambda = %d, \\theta = %d',lambda,theta));
-%   end
-%
-%   See also imgaborfilt
-
-% Copyright 2015-2018 The MathWorks, Inc.
-
 classdef gabor
 
     properties (SetAccess = immutable)
@@ -131,8 +26,9 @@ classdef gabor
     methods
 
         function self = gabor(varargin)
+
             if (nargin > 0)
-                results = parseInputs(varargin{:});
+                results = struct('Wavelength', double(varargin{1}), 'Orientation', double(varargin{2}), 'SpatialFrequencyBandwidth', 1.0, 'SpatialAspectRatio', 0.5);
                 results = computeParameterCombinations(results);
                 numFilters = length(results.Orientation);
                 % Use default construct to allocate vector of gabor filter
@@ -211,6 +107,7 @@ classdef gabor
     end
 
     methods (Hidden = true)
+
         function H = makeFrequencyDomainTransferFunction(self, imageSize, classA)
 
             % Directly construct frequency domain transfer function of
@@ -239,72 +136,10 @@ classdef gabor
 
 end
 
-function resultsOut = parseInputs(varargin)
-
-    narginchk(2, inf);
-
-    results = struct('Wavelength', 0, 'Orientation', 0, 'SpatialFrequencyBandwidth', 1.0, 'SpatialAspectRatio', 0.5);
-
-    wavelength = varargin{1};
-    validateattributes(wavelength, {'numeric'}, {'vector', 'nonempty', 'real', 'positive', 'finite', 'nonsparse', '>=', 2}, ...
-        mfilename, 'Wavelength');
-    results.Wavelength = double(wavelength);
-
-    orientation = varargin{2};
-    validateattributes(orientation, {'numeric'}, {'vector', 'nonempty', 'real', 'finite', 'nonsparse'}, ...
-        mfilename, 'Theta');
-    results.Orientation = double(orientation);
-
-    param_strings = {'SpatialAspectRatio', 'SpatialFrequencyBandwidth'};
-
-    for n = 3:2:length(varargin)
-        % Error if param is not a string.
-        if ~(ischar(varargin{n}) || isstring(varargin{n}) && isscalar(varargin{n}))
-            error(message('images:validate:mustBeString'));
-        else
-            param = validatestring(varargin{n}, param_strings, mfilename);
-
-            % Error if corresponding value is missing.
-            if n + 1 > length(varargin)
-                error(message('images:validate:missingValue', param));
-            end
-
-            switch param
-                case 'SpatialFrequencyBandwidth'
-                    bandwidth = varargin{n + 1};
-
-                    validateattributes(bandwidth, {'numeric'}, {'vector', 'nonempty', 'real', 'positive', 'finite', 'nonsparse'}, ...
-                        mfilename, 'SpatialFrequencyBandwidth');
-
-                    results.SpatialFrequencyBandwidth = double(bandwidth);
-
-                case 'SpatialAspectRatio'
-                    aspectRatio = varargin{n + 1};
-
-                    validateattributes(aspectRatio, {'numeric'}, {'vector', 'nonempty', 'real', 'positive', 'finite', 'nonsparse'}, ...
-                        mfilename, 'SpatialAspectRatio');
-
-                    results.SpatialAspectRatio = double(aspectRatio);
-
-                otherwise
-                    assert(false, 'Unexpected Name/Value pair provided to gabor.');
-            end
-
-        end
-
-    end
-
-    % Silently filter non-unique entries in parameter vectors down to unique
-    % elements.
-    resultsOut = structfun(@unique, results, 'UniformOutput', false);
-
-end
-
 function resultsOut = computeParameterCombinations(results)
 
     [lambda, theta, bandwidth, spatialAspectRatio] = ...
-        ndgrid(results.Wavelength, results.Orientation, ...
-        results.SpatialFrequencyBandwidth, results.SpatialAspectRatio);
+        ndgrid(results.Wavelength, results.Orientation, results.SpatialFrequencyBandwidth, results.SpatialAspectRatio);
 
     resultsOut = struct('Wavelength', lambda(:), ...
         'Orientation', theta(:), ...
@@ -314,9 +149,11 @@ function resultsOut = computeParameterCombinations(results)
 end
 
 function u = createNormalizedFrequencyVector(N)
+
     if mod(N, 2)
         u = linspace(-0.5 + 1 / (2 * N), 0.5 - 1 / (2 * N), N);
     else
         u = linspace(-0.5, 0.5 - 1 / N, N);
     end
+
 end
