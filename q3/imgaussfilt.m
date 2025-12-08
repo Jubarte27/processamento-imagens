@@ -1,26 +1,11 @@
-function B = imgaussfilt(varargin)
-    narginchk(1, Inf);
+function B = imgaussfilt(A, sigma)
 
-    [A, options] = parseInputs(varargin{:});
+    if isscalar(sigma)
+        sigma = [sigma sigma];
+    end
 
-    sigma = options.Sigma;
-    hsize = options.FilterSize;
-    padding = options.Padding;
-    domain = options.FilterDomain;
-
-    % [domain, separableFlag] = chooseFilterImplementation(A, hsize, domain);
-
-    % switch domain
-    %     case 'spatial'
-    %         B = spatialGaussianFilter(A, sigma, hsize, padding, separableFlag);
-
-    %     case 'frequency'
-            B = frequencyGaussianFilter(A, sigma, hsize, padding);
-
-    %     otherwise
-    %         assert(false, 'Internal Error: Unknown filter domain');
-    % end
-
+    sigma = double(sigma);
+    B = frequencyGaussianFilter(A, sigma, computeFilterSizeFromSigma(sigma), 'replicate');
 end
 
 %--------------------------------------------------------------------------
@@ -120,16 +105,6 @@ function result = filterDoubleSeparableWithConv(a, hcol, hrow, hSize, padSize, p
 
 end
 
-function TF = useSeparableFiltering(A, hsize)
-
-    isKernel1D = any(hsize == 1);
-
-    minKernelElems = getSeparableFilterThreshold(class(A));
-
-    TF = ~isKernel1D && prod(hsize) >= minKernelElems;
-
-end
-
 function [hcol, hrow] = createSeparableGaussianKernel(sigma, hsize)
 
     isIsotropic = sigma(1) == sigma(2) && hsize(1) == hsize(2);
@@ -194,26 +169,21 @@ end
 %--------------------------------------------------------------------------
 
 function [A, padSize] = padImage(A, hsize, padding)
-
     padSize = computePadSize(size(A), hsize);
 
     A = padarray(A, padSize, padding, 'both');
-
 end
 
 function padSize = computePadSize(sizeA, sizeH)
-
     rankA = numel(sizeA);
     rankH = numel(sizeH);
 
     sizeH = [sizeH ones(1, rankA - rankH)];
 
     padSize = floor(sizeH / 2);
-
 end
 
 function A = unpadImage(A, outSize)
-
     start = 1 + size(A) - outSize;
     stop = start + outSize - 1;
 
@@ -225,106 +195,8 @@ function A = unpadImage(A, outSize)
     end
 
     A = subsref(A, subCrop);
-
-end
-
-%--------------------------------------------------------------------------
-% Input Parsing
-%--------------------------------------------------------------------------
-function [A, options] = parseInputs(varargin)
-
-    A = varargin{1};
-
-    supportedClasses = {'uint8', 'uint16', 'uint32', 'int8', 'int16', 'int32', 'single', 'double'};
-    supportedImageAttributes = {'real', 'nonsparse'};
-    validateattributes(A, supportedClasses, supportedImageAttributes, mfilename, 'A');
-
-    % Default options
-    options = struct( ...
-        'Sigma', [.5 .5], ...
-        'FilterSize', [3 3], ...
-        'Padding', 'replicate', ...
-        'FilterDomain', 'auto');
-
-    beginningOfNameVal = find(cellfun(@isstr, varargin), 1);
-
-    if isempty(beginningOfNameVal) && length(varargin) == 1
-        %imgaussfilt(A)
-        return;
-    elseif beginningOfNameVal == 2
-        %imgaussfilt(A,'Name',Value)
-    elseif (isempty(beginningOfNameVal) && length(varargin) == 2) || (~isempty(beginningOfNameVal) && beginningOfNameVal == 3)
-        %imgaussfilt(A,sigma,'Name',Value,...)
-        %imgaussfilt(A,sigma)
-        options.Sigma = validateSigma(varargin{2});
-        options.FilterSize = computeFilterSizeFromSigma(options.Sigma);
-    else
-        error(message('images:imgaussfilt:tooManyOptionalArgs'));
-    end
-
-    numPVArgs = length(varargin) - beginningOfNameVal + 1;
-
-    if mod(numPVArgs, 2) ~= 0
-        error(message('images:imgaussfilt:invalidNameValue'));
-    end
-
-    ParamNames = {'FilterSize', 'Padding', 'FilterDomain'};
-    ValidateFcn = {@images.internal.validateTwoDFilterSize, @validatePadding, @validateFilterDomain};
-
-    for p = beginningOfNameVal:2:length(varargin) - 1
-
-        Name = varargin{p};
-        Value = varargin{p + 1};
-
-        idx = strncmpi(Name, ParamNames, numel(Name));
-
-        if ~any(idx)
-            error(message('images:imgaussfilt:unknownParamName', Name));
-        elseif numel(find(idx)) > 1
-            error(message('images:imgaussfilt:ambiguousParamName', Name));
-        end
-
-        validate = ValidateFcn{idx};
-        options.(ParamNames{idx}) = validate(Value);
-
-    end
-
-end
-
-function sigma = validateSigma(sigma)
-
-    validateattributes(sigma, {'numeric'}, {'real', 'nonsparse', 'positive', 'finite', 'nonempty'}, mfilename, 'Sigma');
-
-    if numel(sigma) > 2
-        error(message('images:imgaussfilt:invalidLength', 'Sigma'));
-    end
-
-    if isscalar(sigma)
-        sigma = [sigma sigma];
-    end
-
-    sigma = double(sigma);
-
 end
 
 function filterSize = computeFilterSizeFromSigma(sigma)
-
     filterSize = 2 * ceil(2 * sigma) + 1;
-
-end
-
-function padding = validatePadding(padding)
-
-    if ~ischar(padding)
-        validateattributes(padding, {'numeric', 'logical'}, {'real', 'scalar', 'nonsparse'}, mfilename, 'Padding');
-    else
-        padding = validatestring(padding, {'replicate', 'circular', 'symmetric'}, mfilename, 'Padding');
-    end
-
-end
-
-function filterDomain = validateFilterDomain(filterDomain)
-
-    filterDomain = validatestring(filterDomain, {'spatial', 'frequency', 'auto'}, mfilename, 'FilterDomain');
-
 end
