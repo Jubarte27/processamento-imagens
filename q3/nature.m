@@ -1,284 +1,399 @@
 function seg = nature(img, K)
-    seg = swa_simplified(im2double(rgb2gray(img)));
+    params = swa_simplified_params();
+    params.top_candidates = K;
+    seg = swa_simplified_vectorized(im2double(rgb2gray(img)), params);
 end
 
-% swa_simplified.m
-% Simplified Segmentation by Weighted Aggregation (SWA) - Option B
-%
-% Usage:
-%   I = im2double(rgb2gray(imread('peppers.png')));
-%   params = swa_simplified_params();
-%   labels = swa_simplified(I, params);
-%   imagesc(labels); axis image off; colormap(jet);
-%
-% This simplified version:
-% - builds a 4-neighbour pixel graph W (sparse)
-% - selects seeds greedily (approx 50% or seed_strength)
-% - builds interpolation P (fine->coarse)
-% - forms coarse graph Wc = P' * W * P
-% - aggregates simple properties: mean intensity, variance-of-means
-% - computes saliency G(e_k) exactly via PTLP/PTWP with safeguards
-% - chooses top-k aggregates, performs top-down refinement (thresholding)
-% - returns final pixel labeling for chosen aggregates
+function labels = swa_simplified_vectorized(I, params)
 
-function labels = swa_simplified(I, params)
     if nargin < 2
         params = swa_simplified_params();
     end
-    assert(ndims(I)==2, 'Input must be grayscale image HxW');
+
     I = im2double(I);
     [H, W] = size(I);
     n = H * W;
 
-    % Build fine graph
-    fprintf('Building pixel graph... ');
+    % Build fine graph (4-neighbour)
     [Wfine, coords] = build_pixel_graph_4(I, params.a);
-    Lfine = spdiags(sum(Wfine,2), 0, n, n) - Wfine;
-    fprintf('done. nodes=%d, edges=%d\n', n, nnz(Wfine)/2);
+    Lfine = spdiags(sum(Wfine, 2), 0, n, n) - Wfine;
 
     % Initialize level 1
-    Levels = {};
+    Levels = cell(1, 1);
     Levels{1}.W = Wfine;
     Levels{1}.L = Lfine;
-    Levels{1}.P = speye(n);   % identity for level 1
-    Levels{1}.props.mean = I(:);        % mean intensity
-    Levels{1}.props.varmeans = zeros(n,1); % trivial at pixel level
+    Levels{1}.P = speye(n);
+    Levels{1}.props.mean = I(:);
+    Levels{1}.props.varmeans = zeros(n, 1);
     Levels{1}.coords = coords;
     Levels{1}.size = n;
 
     % Bottom-up coarsening
     lvl = 1;
-    fprintf('Coarsening...\n');
+
     while Levels{lvl}.size > params.stop_coarsen_nodes
         Wcur = Levels{lvl}.W;
-        ncur = Levels{lvl}.size;
 
-        % select seeds (greedy MIS-style)
-        seeds = select_seeds_simple(Wcur, params.seed_strength);
+        % seeds (vectorized MIS-style)
+        seeds = select_seeds_simple_vectorized(Wcur, params.seed_strength);
         Nc = numel(seeds);
+
         if Nc < 2
             break;
         end
 
-        % build interpolation P (ncur x Nc)
-        P = build_interpolation_simple(Wcur, seeds);
+        % interpolation P (vectorized)
+        P = build_interpolation_simple_vectorized(Wcur, seeds);
 
-        % coarse weights: Wc = P' * Wcur * P
+        % coarse weights (sparse)
         Wc = sparse(P' * (Wcur * P));
-        Wc = (Wc + Wc')/2;  % ensure symmetry
+        % prune tiny entries to save memory
+        [ii, jj, ss] = find(Wc);
+        keep = ss >= eps;
+        Wc = sparse(ii(keep), jj(keep), ss(keep), size(Wc, 1), size(Wc, 1));
+        Wc = (Wc + Wc') / 2;
 
         % coarse laplacian
-        Lc = spdiags(sum(Wc,2), 0, size(Wc,1), size(Wc,1)) - Wc;
+        Lc = spdiags(sum(Wc, 2), 0, size(Wc, 1), size(Wc, 1)) - Wc;
 
-        % aggregate properties (mean, varmeans)
+        % aggregate simple properties
         props_child = Levels{lvl}.props;
-        props_coarse = aggregate_props_simple(P, props_child);
+        props_coarse = aggregate_props_simple_vectorized(P, props_child);
 
-        % optional: modulate couplings by property difference (simple)
+        % optional property modulation
         if params.use_property_modulation
-            Wc = modulate_couplings_simple(Wc, props_coarse, params.prop_weight_scale);
-            Wc = (Wc + Wc')/2;
-            Lc = spdiags(sum(Wc,2), 0, size(Wc,1), size(Wc,1)) - Wc;
+            Wc = modulate_couplings_simple_vectorized(Wc, props_coarse, params.prop_weight_scale);
+            Wc = (Wc + Wc') / 2;
+            Lc = spdiags(sum(Wc, 2), 0, size(Wc, 1), size(Wc, 1)) - Wc;
         end
 
-        % store next level
+        % store
         lvl = lvl + 1;
         Levels{lvl}.W = Wc;
         Levels{lvl}.L = Lc;
-        Levels{lvl}.P = P;  % maps fine->coarse (size ncur x Nc)
+        Levels{lvl}.P = P;
         Levels{lvl}.props = props_coarse;
-        Levels{lvl}.coords = aggregate_coords_simple(P, Levels{lvl-1}.coords);
-        Levels{lvl}.size = size(Wc,1);
-
-        fprintf(' level %d: nodes=%d\n', lvl, Levels{lvl}.size);
+        Levels{lvl}.coords = aggregate_coords_simple(P, Levels{lvl - 1}.coords);
+        Levels{lvl}.size = size(Wc, 1);
 
         if Levels{lvl}.size <= params.stop_coarsen_nodes
             break;
         end
+
     end
 
     maxLevel = lvl;
-    fprintf('Coarsening finished: %d levels\n', maxLevel);
 
-    % Salient detection: compute exact G(e_k) per level
-    saliency = cell(maxLevel,1);
-    candidates = cell(maxLevel,1);
+    % Saliency detection (vectorized per level)
+    saliency = cell(maxLevel, 1);
+    candidates = cell(maxLevel, 1);
+
     for L = 1:maxLevel
-        [scores, cand] = detect_salient_exact(Levels, L, params);
+        [scores, cand] = detect_salient_exact_vectorized(Levels, L, params);
         saliency{L} = scores;
         candidates{L} = cand;
-        fprintf(' level %d: nodes=%d, candidates=%d\n', L, Levels{L}.size, numel(cand));
     end
 
-    % collect all nodes and sort by score (lower better)
-    all_list = [];
-    for L=1:maxLevel
-        sc = saliency{L};
-        for k = 1:numel(sc)
-            all_list = [all_list; struct('level', L, 'node', k, 'score', sc(k))];
-        end
+    % Collect all nodes (vectorized arrays instead of structs)
+    levels_all = cell(maxLevel, 1);
+    nodes_all = cell(maxLevel, 1);
+    scores_all = cell(maxLevel, 1);
+
+    for L = 1:maxLevel
+        nL = Levels{L}.size;
+        levels_all{L} = L * ones(nL, 1);
+        nodes_all{L} = (1:nL).';
+        scores_all{L} = saliency{L}(:);
     end
-    scores_vec = [all_list.score]';
-    [~, ord] = sort(scores_vec, 'ascend');
-    all_list = all_list(ord);
 
-    % choose top candidates
-    M = min(params.top_candidates, numel(all_list));
-    chosen = all_list(1:M);
-    fprintf('Selected top %d aggregates for top-down refinement\n', M);
+    levels_all = vertcat(levels_all{:});
+    nodes_all = vertcat(nodes_all{:});
+    scores_all = vertcat(scores_all{:});
 
-    % Top-down refinement for each chosen candidate
-    final_masks = false(n, M);
-    for m = 1:M
-        L0 = chosen(m).level;
-        node0 = chosen(m).node;
-        % U at coarse level L0
-        U = zeros(Levels{L0}.size,1);
-        U(node0) = 1;
-        u_coarse = U;
-        % roll down
+    [~, ord] = sort(scores_all, 'ascend');
+    levels_all = levels_all(ord);
+    nodes_all = nodes_all(ord);
+    scores_all = scores_all(ord);
+
+    %% ------------------------------------------------------------------------
+    % 1. Select top candidates
+    %% ------------------------------------------------------------------------
+    M0 = numel(scores_all);
+    chosen_levels = levels_all(1:M0);
+    chosen_nodes = nodes_all(1:M0);
+
+    %% ------------------------------------------------------------------------
+    % 2. Top-down refinement (fully sparse and FAST)
+    %% ------------------------------------------------------------------------
+
+    % Reserve nnz list (worst-case: each pixel appears in many masks)
+    rows = cell(M0, 1); % row indices (per mask)
+    cols = cell(M0, 1); % matching column indices
+    % values are always 1, so we don't need a cell for vals
+
+    for m = 1:M0
+        L0 = chosen_levels(m);
+        node0 = chosen_nodes(m);
+
+        % Create sparse vector ONLY via constructor (no indexing!)
+        u_coarse = sparse(node0, 1, 1, Levels{L0}.size, 1);
+
         for L = L0:-1:2
-            P = Levels{L}.P;         % maps fine(L-1) -> coarse(L)
-            % to go coarse->fine use P * u_coarse? P is fine->coarse, so
-            % coarse->fine interpolation is P * u_coarse, since column k of P lists
-            % weights of fine nodes to coarse node k. So yes:
-            u_fine = P * u_coarse;  % size = n_{L-1} x 1
-            % threshold toward boolean
-            u_fine(u_fine >= params.topdown_thresh_hi) = 1;
-            u_fine(u_fine <= params.topdown_thresh_lo) = 0;
-            u_coarse = u_fine;
+            P = Levels{L}.P; % sparse
+            u_fine = P * u_coarse; % sparse
+
+            hi = params.topdown_thresh_hi;
+            lo = params.topdown_thresh_lo;
+
+            % Compute mask using sparse constructor
+            nz = find(u_fine >= hi); % indices to keep
+            nz2 = find(u_fine <= lo); % indices to drop
+
+            % Remove drop set
+            keep = setdiff(nz, nz2); % sorted, no duplicates
+
+            % Build new sparse u_coarse WITHOUT indexing:
+            u_coarse = sparse(keep, 1, 1, size(P, 1), 1);
         end
-        % now u_coarse is at pixel level
-        final_masks(:,m) = u_coarse > params.final_assignment_thresh;
+
+        % Final pixel-level threshold
+        final_idx = find(u_coarse > params.final_assignment_thresh);
+
+        rows{m} = final_idx;
+        cols{m} = m * ones(numel(final_idx), 1);
     end
 
-    % Assemble labels: assign in order of chosen (no overlap allowed)
-    labels_vec = zeros(n,1);
-    taken = false(n,1);
-    for m = 1:M
-        mask = final_masks(:,m) & ~taken;
-        labels_vec(mask) = m;
+    % Build final_masks0 at once
+    ii = vertcat(rows{:});
+    jj = vertcat(cols{:});
+    ss = ones(numel(ii), 1);
+
+    final_masks0 = sparse(ii, jj, ss, n, M0);
+
+    %% ------------------------------------------------------------------------
+    % 3. Compute pairwise mask similarity using sparse arithmetic (no dense F'*F)
+    %% ------------------------------------------------------------------------
+    % Convert to sparse logical (n x M0). This is memory- and time-efficient
+    Fs = sparse(double(final_masks0)); % logicals become sparse doubles (0/1). Good.
+
+    % sizes (number of pixels) per mask
+    sizes = full(sum(Fs, 1))'; % M0 x 1
+
+    % intersection counts (sparse M0 x M0) : inter(i,j) = |mask_i ∩ mask_j|
+    inter = Fs' * Fs; % sparse matrix of intersections
+
+    % If inter is entirely diagonal or empty, nothing to merge
+    if nnz(inter) == 0
+        % fallback: just pick first top K masks
+        K = min(params.top_candidates, M0);
+        final_masks = final_masks0(:, 1:K);
+    else
+        % compute cosine similarity on nonzero entries only:
+        [ii, jj, ijvals] = find(inter); % vectors of same length L = nnz(inter)
+
+        % avoid self-sim entries or keep them but ignore later
+        selfmask = (ii == jj);
+        % denom = sqrt(size_i * size_j)
+        denom = sqrt(sizes(ii) .* sizes(jj));
+        sim_vals = ijvals ./ (denom + eps); % L x 1
+
+        % build sparse similarity matrix (symmetric)
+        Sim = sparse(ii, jj, sim_vals, M0, M0);
+        Sim = (Sim + Sim') / 2; % ensure symmetry (still sparse)
+
+        % remove diagonal entries (self-sim)
+        Sim = Sim - spdiags(spdiags(Sim, 0), 0, M0, M0);
+
+        % Agglomerative merging using sparse Sim.
+        % We'll iteratively merge the pair with maximum similarity.
+        clusters = num2cell(1:M0);
+        active = true(1, M0);
+
+        % For efficiency, convert Sim to a list of (i,j,val) and maintain a max-heap-like loop.
+        % But here we use a simple sparse approach: repeatedly find max value in Sim.
+        % Because Sim is sparse and M0 is moderate (we selected a limited M0), this is OK.
+        while sum(active) > params.top_candidates
+            % restrict to active rows/cols by zeroing others (cheap on sparse)
+            Sim_sub = Sim;
+            inactive_idx = find(~active);
+
+            if ~isempty(inactive_idx)
+                Sim_sub(inactive_idx, :) = 0;
+                Sim_sub(:, inactive_idx) = 0;
+            end
+
+            % find global maximum entry (sparse-friendly)
+            [i_list, j_list, v_list] = find(Sim_sub);
+
+            if isempty(v_list)
+                break;
+            end
+
+            [~, imax] = max(v_list);
+            i = i_list(imax); j = j_list(imax);
+
+            % merge j into i (keep i)
+            clusters{i} = [clusters{i}, clusters{j}];
+            clusters{j} = [];
+            active(j) = false;
+
+            % update Sim: the merged cluster i now represents union of masks in clusters{i}
+            % We update similarity of i with all others by computing union-based intersection quickly:
+            % New intersection counts for i with any k: inter(i,k) = sum over member masks p in clusters{i} of inter(p,k)
+            members_i = clusters{i};
+
+            if numel(members_i) > 1
+                % sum rows of 'inter' corresponding to members_i
+                row_sum = sum(inter(members_i, :), 1); % 1 x M0 sparse
+                % update Sim(i, :) = row_sum ./ sqrt(newsize_i * sizes(:)')
+                newsize_i = sum(sizes(members_i));
+                denom_vec = sqrt(newsize_i .* sizes(:))' + eps; % 1 x M0
+                new_sim_row = full(row_sum) ./ denom_vec; % dense 1xM0 but small if M0 small
+                % assign to Sim (sparse)
+                Sim(i, :) = sparse(new_sim_row);
+                Sim(:, i) = Sim(i, :)';
+            end
+
+            % zero out similarities for j (it's inactive)
+            Sim(j, :) = 0; Sim(:, j) = 0;
+        end
+
+        % Now form final K masks as union of members in each active cluster
+        cluster_ids = find(active);
+        K = numel(cluster_ids); % should equal params.top_candidates unless early stop
+        final_masks = false(n, K);
+
+        for k = 1:K
+            members = clusters{cluster_ids(k)};
+            if isempty(members), continue; end
+            % union of binary masks across members
+            final_masks(:, k) = any(final_masks0(:, members), 2);
+        end
+
+    end
+
+    %% ------------------------------------------------------------------------
+    % 4. Pixel labeling (first cluster wins) and assign remaining by intensity
+    %% ------------------------------------------------------------------------
+    labels_vec = zeros(n, 1);
+    taken = false(n, 1);
+
+    for k = 1:size(final_masks, 2)
+        mask = final_masks(:, k) & ~taken;
+        labels_vec(mask) = k;
         taken = taken | mask;
     end
 
-    % assign remaining to nearest chosen region by intensity difference
-    if params.assign_remaining && any(labels_vec==0)
-        un = find(labels_vec==0);
-        if ~isempty(un)
-            pixvals = I(:);
-            region_means = zeros(M,1);
-            for m = 1:M
-                region_means(m) = mean(pixvals(labels_vec==m));
+    if params.assign_remaining && any(labels_vec == 0)
+        un = find(labels_vec == 0);
+        pixvals = I(:);
+        region_means = zeros(size(final_masks, 2), 1);
+
+        for k = 1:size(final_masks, 2)
+            idx = labels_vec == k;
+
+            if any(idx)
+                region_means(k) = mean(pixvals(idx));
+            else
+                region_means(k) = NaN;
             end
-            for uidx = un'
-                [~, b] = min(abs(region_means - pixvals(uidx)));
-                labels_vec(uidx) = b;
-            end
+
         end
+
+        region_means(isnan(region_means)) = mean(pixvals);
+        D = abs(bsxfun(@minus, pixvals(un), region_means'));
+        [~, best] = min(D, [], 2);
+        labels_vec(un) = best;
     end
 
     labels = reshape(labels_vec, H, W);
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Default params
+%% -------------------- Helper subfunctions (vectorized) --------------------
+
 function params = swa_simplified_params()
-    params.a = 10;                    % weight parameter in wij = exp(-a * |Ii - Ij|)
-    params.seed_strength = 0.5;       % approx fraction of seeds (0..1)
-    params.stop_coarsen_nodes = 40;   % stop coarsening at this many nodes
-    params.top_candidates = 6;        % number of top aggregates to refine
-    params.topdown_thresh_hi = 0.9;   % top-down threshold high
-    params.topdown_thresh_lo = 0.1;   % top-down threshold low
+    params.a = 12;
+    params.seed_strength = 0.5;
+    params.stop_coarsen_nodes = 40;
+    params.top_candidates = 6;
+    params.topdown_thresh_hi = 0.9;
+    params.topdown_thresh_lo = 0.1;
     params.final_assignment_thresh = 0.5;
-    params.assign_remaining = true;
-    params.use_property_modulation = true; % whether to modulate Wc by properties
+    params.assign_remaining = false;
+    params.use_property_modulation = true;
     params.prop_weight_scale = 1.0;
     params.eps_saliency = 1e-8;
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Build 4-neighbour pixel sparse graph
 function [W, coords] = build_pixel_graph_4(I, a)
     [H, Wd] = size(I);
     n = H * Wd;
-    idx = @(r,c) (c-1)*H + r;
-    ii = []; jj = []; ss = [];
+    idx = @(r, c) (c - 1) * H + r;
+    % pre-allocate roughly
+    est = n * 4;
+    ii = zeros(est, 1); jj = zeros(est, 1); ss = zeros(est, 1); p = 0;
+
+    function p = update(p, i, r, c)
+        j = idx(r, c); Ij = I(r, c); w = exp(-a * abs(Ii - Ij));
+        p = p + 1; ii(p) = i; jj(p) = j; ss(p) = w;
+        p = p + 1; ii(p) = j; jj(p) = i; ss(p) = w;
+    end
+
     for r = 1:H
+
         for c = 1:Wd
-            i = idx(r,c);
-            Ii = I(r,c);
-            if r < H
-                j = idx(r+1,c);
-                Ij = I(r+1,c);
-                w = exp(-a * abs(Ii - Ij));
-                ii(end+1)=i; jj(end+1)=j; ss(end+1)=w;
-                ii(end+1)=j; jj(end+1)=i; ss(end+1)=w;
-            end
-            if c < Wd
-                j = idx(r,c+1);
-                Ij = I(r,c+1);
-                w = exp(-a * abs(Ii - Ij));
-                ii(end+1)=i; jj(end+1)=j; ss(end+1)=w;
-                ii(end+1)=j; jj(end+1)=i; ss(end+1)=w;
-            end
+            i = idx(r, c);
+            Ii = I(r, c);
+
+            if r < H; p = update(p, i, r + 1, c); end
+            if c < Wd; p = update(p, i, r, c + 1); end
         end
+
     end
+
+    ii = ii(1:p); jj = jj(1:p); ss = ss(1:p);
     W = sparse(ii, jj, ss, n, n);
-    W = (W + W')/2;
-    % coords
-    coords = zeros(n,2);
+    W = (W + W') / 2;
+    coords = zeros(n, 2);
+
     for c = 1:Wd
+
         for r = 1:H
-            i = idx(r,c);
-            coords(i,:) = [r,c];
+            i = idx(r, c);
+            coords(i, :) = [r, c];
         end
+
     end
+
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Seed selection (simple greedy MIS by degree)
-function seeds = select_seeds_simple(W, seed_strength)
-    n = size(W,1);
-
-    % Degrees
-    deg = full(sum(W,2));
-
-    % Target number of seeds
+function seeds = select_seeds_simple_vectorized(W, seed_strength)
+    n = size(W, 1);
+    deg = full(sum(W, 2));
     target = max(2, round(seed_strength * n));
-
-    % Sort nodes by degree (descending)
     [~, order] = sort(deg, 'descend');
-
-    % Precompute neighbors once for all nodes
-    % This avoids calling find(W(v,:)) inside the loop
+    % neighbor lists via accumarray
     [i_all, j_all] = find(W);
     nbrs_cell = accumarray(i_all, j_all, [n, 1], @(x){x}, {});
 
-    % State arrays
-    covered    = false(n,1);
-    seeds_map  = false(n,1);
-
-    % Greedy MIS sweep
+    covered = false(n, 1);
+    seeds_map = false(n, 1);
     count = 0;
+
     for k = 1:n
         v = order(k);
+
         if ~covered(v)
-            % select v
             seeds_map(v) = true;
             count = count + 1;
-
-            % mark v and neighbors as covered
             nbrs = nbrs_cell{v};
             covered(v) = true;
             covered(nbrs) = true;
-
-            if count >= target
-                break;
-            end
+            if count >= target, break; end
         end
+
     end
 
-    % Safety: ensure at least 2 seeds
     if sum(seeds_map) < 2
         seeds_map(1:2) = true;
     end
@@ -286,58 +401,42 @@ function seeds = select_seeds_simple(W, seed_strength)
     seeds = find(seeds_map);
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Build interpolation matrix P (fine -> coarse) simple version:
-% p_ik = w(i,k) / sum_j w(i,j) for seeds k adjacent to i; seed nodes map to themselves.
-function P = build_interpolation_simple(W, seeds)
-    n  = size(W,1);
+function P = build_interpolation_simple_vectorized(W, seeds)
+    n = size(W, 1);
     Nc = numel(seeds);
-
-    % map seed index in 1..n to 1..Nc (seed position)
-    seed_index = zeros(n,1);
+    seed_index = zeros(n, 1);
     seed_index(seeds) = 1:Nc;
 
-    % 1) Identify all edges i -> j that connect to a seed
-    Wnz = find(W > 0);
-    [i_all, j_all] = ind2sub([n n], Wnz);
-
+    [i_all, j_all, w_all] = find(W);
     is_seed_neighbor = seed_index(j_all) > 0;
-    i_sn  = i_all(is_seed_neighbor);        % fine nodes with a seed neighbor
-    j_sn  = j_all(is_seed_neighbor);        % seed neighbors
-    w_sn  = W(Wnz(is_seed_neighbor));       % weights
-    col_sn = seed_index(j_sn);              % seed column indices
+    i_sn = i_all(is_seed_neighbor);
+    j_sn = j_all(is_seed_neighbor);
+    w_sn = w_all(is_seed_neighbor);
+    col_sn = seed_index(j_sn);
 
-    % 2) Accumulate weights per fine-node (for normalization)
     ssum = accumarray(i_sn, w_sn, [n 1], @sum, 0);
 
-    % 3) Identify fine nodes that have NO seed neighbors
     no_seed_neighbor = (ssum == 0);
+    ii2 = []; jj2 = []; ss2 = [];
 
-    % 4) For those, connect to the single highest-weight seed
     if any(no_seed_neighbor)
         nodes_no = find(no_seed_neighbor);
-        W_to_seeds = W(nodes_no, seeds);            % (#nodes_no x Nc)
-        [~, maxidx] = max(W_to_seeds, [], 2);    % best seed for each fine node
-
+        W_to_seeds = W(nodes_no, seeds); % (#nodes_no x Nc)
+        [~, maxidx] = max(W_to_seeds, [], 2);
         ii2 = nodes_no;
-        jj2 = maxidx;      % 1..Nc
-        ss2 = ones(numel(nodes_no),1);  % will give P(i,j)=1
-    else
-        ii2 = []; jj2 = []; ss2 = [];
+        jj2 = maxidx;
+        ss2 = ones(numel(nodes_no), 1);
     end
 
-    % 5) Normalize weights for nodes WITH seed neighbors
     keep = (ssum(i_sn) > 0);
     ii1 = i_sn(keep);
     jj1 = col_sn(keep);
     ss1 = w_sn(keep) ./ ssum(ii1);
 
-    % 6) Seed nodes map to themselves with weight 1
     ii3 = seeds(:);
     jj3 = (1:Nc).';
-    ss3 = ones(Nc,1);
+    ss3 = ones(Nc, 1);
 
-    % 7) Assemble sparse interpolation matrix
     ii = [ii1; ii2; ii3];
     jj = [jj1; jj2; jj3];
     ss = [ss1; ss2; ss3];
@@ -345,154 +444,85 @@ function P = build_interpolation_simple(W, seeds)
     P = sparse(ii, jj, ss, n, Nc);
 end
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Aggregate simple properties: mean intensity and variance-of-means
-function props_c = aggregate_props_simple(P, props_child)
-    % P is (n_fine x n_coarse)
-    x = props_child.mean(:);      % fine-level means
-    x2 = x.^2;                    % squared means
-
-    % Column sums (sum of weights)
-    sumP = full(sum(P,1))';       % Nc x 1
+function props_c = aggregate_props_simple_vectorized(P, props_child)
+    x = props_child.mean(:);
+    x2 = x .^ 2;
+    sumP = full(sum(P, 1))';
     sumP(sumP == 0) = eps;
-
-    % Weighted sums
-    sum_wx  = full(P' * x);       % Nc x 1
-    sum_wx2 = full(P' * x2);      % Nc x 1
-
-    % Mean intensity (already vectorized)
+    sum_wx = full(P' * x);
+    sum_wx2 = full(P' * x2);
     mean_c = sum_wx ./ sumP;
-
-    % Variance of means:
-    %   var = (Σ w*x^2 / Σ w) - (Σ w*x / Σ w)^2
-    varmeans_c = (sum_wx2 ./ sumP) - (mean_c.^2);
-
-    % Clamp tiny negative values from numerical precision
+    varmeans_c = (sum_wx2 ./ sumP) - mean_c .^ 2;
     varmeans_c(varmeans_c < 0) = 0;
-
-    % Output
     props_c.mean = mean_c;
     props_c.varmeans = varmeans_c;
 end
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Modulate coarse couplings using property differences (simple exponential)
-function Wmod = modulate_couplings_simple(Wc, props, scale)
-    % Extract edges
+function Wmod = modulate_couplings_simple_vectorized(Wc, props, scale)
     [ii, jj, ss] = find(Wc);
-
-    % Feature matrix fk: [mean, varmeans]
     fk = [props.mean(:), props.varmeans(:)];
 
     % Normalize features (zero mean, unit std)
-    fk_m = repmat(mean(fk,1), size(fk, 1), 1);
+    fk_m = repmat(mean(fk, 1), size(fk, 1), 1);
     fk = fk - fk_m;
-    sdev = std(fk,0,1); 
+    sdev = std(fk, 0, 1);
     sdev = repmat(sdev, size(fk, 1), 1);
+
     fk = fk ./ sdev;
-
-    % Vectorized pairwise feature differences
-    df = fk(ii,:) - fk(jj,:);     % (#edges x 2)
-
-    % Squared L2 norm of feature differences
-    d2 = sum(df.^2, 2);           % (#edges x 1)
-
-    % Modulation factor for each edge
-    factor = exp(-scale * d2);    % (#edges x 1)
-
-    % New weights
+    df = fk(ii, :) - fk(jj, :);
+    d2 = sum(df .^ 2, 2);
+    factor = exp(-scale * d2);
     new_s = ss .* factor;
-
-    % Prune before building sparse matrix
     keep = new_s >= eps;
-    ii = ii(keep);
-    jj = jj(keep);
-    new_s = new_s(keep);
-
-    % Build sparse weighted matrix
-    n = size(Wc,1);
-    Wmod = sparse(ii, jj, new_s, n, n);
-
-    % Symmetrize
+    Wmod = sparse(ii(keep), jj(keep), new_s(keep), size(Wc, 1), size(Wc, 1));
     Wmod = (Wmod + Wmod') / 2;
 end
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Aggregate coords simple
 function coords_c = aggregate_coords_simple(P, coords_f)
-    x = coords_f(:,1);
-    y = coords_f(:,2);
-    denom = max(sum(P,1)', eps);
+    x = coords_f(:, 1); y = coords_f(:, 2);
+    denom = max(sum(P, 1)', eps);
     x_c = (P' * x) ./ denom;
     y_c = (P' * y) ./ denom;
     coords_c = [x_c, y_c];
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Detect salient nodes using exact PTLP/PTWP evaluation (numerically safe)
-function [scores, candidates] = detect_salient_exact(Levels, lvl, params)
+function [scores, candidates] = detect_salient_exact_vectorized(Levels, lvl, params)
 
-    % ---------------------------------------------------------------------
-    % 1) Compute PTLP, PTWP
-    % ---------------------------------------------------------------------
     if lvl == 1
         PTLP = Levels{1}.L;
         PTWP = Levels{1}.W;
     else
-        P  = Levels{lvl}.P;      
-        Lf = Levels{lvl-1}.L;
-        Wf = Levels{lvl-1}.W;
+        P = Levels{lvl}.P;
+        Lf = Levels{lvl - 1}.L;
+        Wf = Levels{lvl - 1}.W;
         PTLP = sparse(P' * (Lf * P));
         PTWP = sparse(P' * (Wf * P));
     end
 
     diag_num = max(real(diag(PTLP)), 0);
     diag_den = max(real(diag(PTWP)), params.eps_saliency);
-    scores = diag_num ./ (2*diag_den + params.eps_saliency);
-
+    scores = diag_num ./ (2 * diag_den + params.eps_saliency);
     bad = ~isfinite(scores);
+
     if any(bad)
         mx = max(scores(~bad));
-        scores(bad) = mx*10 + 1;
+        scores(bad) = mx * 10 + 1;
     end
 
-    % ---------------------------------------------------------------------
-    % 2) Local-minimum test WITHOUT accumarray
-    % ---------------------------------------------------------------------
     Wc = Levels{lvl}.W;
-    n  = size(Wc,1);
-
-    % Get edges
+    n = size(Wc, 1);
     [ii, jj] = find(Wc);
-
-    % For each edge (i -> j), check if score(i) <= score(j)
     comp = double(scores(ii) <= scores(jj) + eps);
-
-    % Build sparse matrix M(i,j) = comp(edge i->j)
     M = sparse(ii, jj, comp, n, n);
-
-    % For each node i, ok(i) = all neighbors satisfy condition
-    % This is TRUE iff min over j of M(i,j) == 1
-    min_comp = min(M, [], 2);       % sparse min over columns
-
+    min_comp = min(M, [], 2); % per-row min (1 if all neighbors >=)
     ok = (min_comp == 1);
-
-    % ---------------------------------------------------------------------
-    % 3) isolated nodes = automatic candidates
-    % ---------------------------------------------------------------------
     deg = full(sum(Wc ~= 0, 2));
     ok(deg == 0) = true;
-
     candidates = find(ok);
 
-    % ---------------------------------------------------------------------
-    % 4) fallback if all nodes failed
-    % ---------------------------------------------------------------------
     if isempty(candidates)
         [~, ord] = sort(scores, 'ascend');
         candidates = ord(1:min(10, numel(ord)));
     end
+
 end
