@@ -32,7 +32,8 @@ Esse método é capaz de separar regiões que possuem texturas distintas mesmo q
 \lstinputlisting{segment_kmeans.m}
 \lstinputlisting{segment_gabor.m}
 \lstinputlisting{main.m}
-
+\lstinputlisting{kmeans.m}
+\lstinputlisting{overlay_labels.m}
 
 \subsection{Resultados Obtidos e Análise}
 
@@ -40,72 +41,71 @@ Os resultados obtidos mostram diferenças claras entre os métodos de segmentaç
 
 \subsubsection{Imagens originais}
 
-\twofigures{.out/borboleta.png}{Borboleta}{.out/raposa.png}{Raposa}{Imagens coloridas}{originais_3_coloridas}
+\twofigures{.out/dog.png}{Cachorro}{.out/katrina.png}{Katrina}{Imagens originais}{originais_3_coloridas}
 
-K-means (Lab) - Imagem da Borboleta
+\subsubsection{Cachorro K-Means}
 
-Para a borboleta, o método baseado apenas em cor teve desempenho satisfatório.
+\figuresderived{dog_K.png}{\_2,\_3,\_4}{{$K = \num{2}$},{$K = \num{3}$},{$K = \num{4}$}}{Resultado da aplicação na imagem cachorro}{cachorrokmeans}
 
-\begin{itemize}
-    \item \textbf{K = 2}: A segmentação separa de forma nítida o fundo e a borboleta, criando uma divisão simples, porém eficaz. A forma do inseto permanece bem definida.
-    \item \textbf{K = 3}: Surge uma subdivisão interna da borboleta, separando áreas mais claras e mais escuras das asas. O fundo também é dividido em mais uma região.
-    \item \textbf{K = 4}: A segmentação se torna mais rica em detalhes, incluindo nuances de tons tanto nas asas quanto no fundo. Apesar disso, alguns ruídos começam a aparecer, especialmente na região externa da imagem.
-\end{itemize}
-
-Em geral, o método K-means captou bem as diferenças de cor e luminosidade da borboleta, mesmo sem considerar textura.
-
-\subsubsection{Borboleta K-Means}
-
-Gabor (Textura) - Imagem da Borboleta
-
-Nos resultados baseados em textura, o comportamento muda significativamente.
+Para o cachorro, o método baseado apenas em cor teve desempenho satisfatório.
 
 \begin{itemize}
-    \item \textbf{K = 2}: A segmentação destaca padrões de textura nas asas, mas também introduz ruídos decorrentes das respostas dos filtros.
-    \item \textbf{K = 3}: Algumas estruturas internas da borboleta começam a ser separadas com maior consistência, mas o ruído ainda permanece evidente.
-    \item \textbf{K = 4}: Surge mais definição na silhueta e nas áreas texturizadas, porém a segmentação ainda mantém regiões ruidosas, especialmente no fundo.
+    \item \textbf{K = 2}: A segmentação separa de forma nítida o fundo e o cachorro, criando uma divisão simples, porém eficaz. A forma do animal permanece bem definida.
+    \item \textbf{K = 3}: Surge uma subdivisão interna do cachorro, separando áreas mais claras e mais escuras das asas. O fundo também é dividido em mais uma região.
+    \item \textbf{K = 4}: A segmentação se torna mais rica em detalhes, incluindo nuances de tons tanto no focinho quanto no fundo.
 \end{itemize}
 
-O método baseado em Gabor é muito sensível a variações de textura e, neste caso, acaba segmentando várias regiões que não correspondem a objetos reais, mas sim aos padrões do filtro. Ainda assim, ele ressalta detalhes internos das asas que não aparecem no K-means de cor.
+Em geral, o método K-means captou bem as diferenças de cor e luminosidade do cachorro, mesmo sem considerar textura.
 
-\subsubsection{Borboleta Gabor + K-Means}
+\subsubsection{Cachorro Gabor + K-Means}
 
-K-means (Lab) - Imagem da Raposa
+\figuresderived{dog_G.png}{\_2,\_3,\_4}{{$K = \num{2}$},{$K = \num{3}$},{$K = \num{4}$}}{Resultado da aplicação na imagem cachorro}{cachorrogabor}
 
-Para a raposa, que tem variações relevantes de cor entre o animal e o fundo, o método funciona bem.
+Nos resultados baseados em textura, o comportamento muda um pouco.
 
 \begin{itemize}
-    \item \textbf{K = 2}: Já é possível separar o animal do fundo, embora algumas partes fiquem agrupadas de forma simplificada.
-    \item \textbf{K = 3}: O contorno da raposa aparece de maneira mais fiel, com separação mais clara das sombras e detalhes do pescoço.
-    \item \textbf{K = 4}: A segmentação fica mais detalhada, diferenciando ainda mais regiões do pelo e partes do fundo. Porém, assim como na borboleta, o aumento de K também traz pequenas regiões quebradas e ruídos.
+    \item \textbf{K = 2}: A segmentação destaca bastante as bordas e o focinho do cachorro, já que as texturas nessas áreas são mais semelhantes entre si do que com o pelo do cachorro ou o fundo levemente borrado.
+    \item \textbf{K = 3}: As bordas do cachorro se acentuam ainda mais, e mais uma divisão para separar os olhos e o focinho do resto da imagem.
+    \item \textbf{K = 4}: As bordas e o focinho continuam bastante demarcados, além de surgir um agrupamento do tronco do animal com o casaco ao fundo da imagem.
 \end{itemize}
 
-O método de cor consegue destacar a raposa de forma eficiente, mostrando uma boa separação entre fundo, pelo claro e pelo escuro.
+O método baseado em Gabor separa bem a silhueta, os olhos e o focinho do cachorro, mas por ignorar a cor acaba agrupando o casaco vermelho com o pelo branco.
 
-\subsubsection{Raposa K-Means}
+\subsubsection{Costa K-Means}
 
-Gabor (Textura) - Imagem da Raposa
+\figuresderived{katrina_K.png}{\_2,\_3,\_4}{{$K = \num{2}$},{$K = \num{3}$},{$K = \num{4}$}}{Resultado da aplicação na imagem costa}{costakmeans}
 
-Como na borboleta, o método baseado em textura produz resultados mais irregulares.
+Para a zona costeira, que tem pouca saturação, o método ainda assim capta detalhes interessantes.
 
 \begin{itemize}
-    \item \textbf{K = 2}: Os padrões de textura do filtro dominam a imagem, com grande presença de ruído. Ainda assim, algumas áreas da raposa se destacam do fundo.
-    \item \textbf{K = 3}: A silhueta da raposa torna-se mais perceptível, e diferentes regiões de textura começam a ser agrupadas de maneira mais coerente.
-    \item \textbf{K = 4}: Surgem regiões mais próximas do formato real do animal, com subdivisão de áreas texturizadas no pelo. No entanto, o ruído permanece significativo.
+    \item \textbf{K = 2}: Já é possível perceber a borda entre costa e mar, apesar de agrupar os trechos mais verdes da cidade com o mar.
+    \item \textbf{K = 3}: Já é possível distinguir as ruas da cidade. O controno da costa segue bem acentuado.
+    \item \textbf{K = 4}: Trechos com pouca densidade de casas, como o estádio, ou cobertos por nuvens criam um novo agrupamento
 \end{itemize}
 
-De forma geral, o método baseado em textura é mais adequado para imagens com padrões repetitivos bem definidos. A imagem da raposa, por ter texturas mais suaves, não se beneficia tanto dos filtros Gabor quanto a segmentação por cor.
+O método de cor consegue destacar a costa, as ruas e os trechos mais densamente povoados, apesar de agrupar o mar com parte das casas, por conta da cor semelhante.
 
-\subsubsection{Raposa Gabor + K-Means}
+\subsubsection{Costa Gabor + K-Means}
+
+\figuresderived{katrina_G.png}{\_2,\_3,\_4}{{$K = \num{2}$},{$K = \num{3}$},{$K = \num{4}$}}{Resultado da aplicação na imagem costa}{costagabor}
+
+Com uma imagem com tantos padrões repetidos, o método por textura apresenta resultados bons.
+
+\begin{itemize}
+    \item \textbf{K = 2}: A costa, as nuvens e outros trechos com grande variação na frequência são os primeiros a serem agrupados.
+    \item \textbf{K = 3}: O mar e as regiões com àrvores são agrupados. O mar se torna bastante distinto da costa.
+    \item \textbf{K = 4}: O pavimento das estradas maiores é movido para um novo agrupamento 
+\end{itemize}
+
+De forma geral, o método baseado em textura retorna bons resultados, extraíndo boas características da imagem. 
 
 \subsection{Conclusão da Análise}
 Os experimentos mostram que:
 
 \begin{itemize}
-    \item K-means no espaço Lab produz segmentações mais limpas, estruturadas e visualmente coerentes, destacando corretamente os objetos principais (borboleta e raposa).
-    \item O método baseado em textura gera segmentações mais fragmentadas, capturando padrões de textura, mas também introduzindo ruídos consideráveis.
+    \item K-means no espaço Lab produz segmentações mais limpas, estruturadas e visualmente coerentes, destacando corretamente os objetos principais (cachorro).
+    \item O método baseado em textura captura muito bem bordas e regiões lisas.
     \item A variação de K controla o nível de detalhe: valores baixos criam segmentações mais simples; valores maiores aumentam a granularidade, mas podem introduzir ruído.
-    \item Para as imagens utilizadas, a segmentação por cor foi mais eficaz, enquanto o método baseado em textura foi mais útil apenas para ressaltar detalhes internos e padrões finos.
 \end{itemize}
 
 \end{document}

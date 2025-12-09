@@ -1,4 +1,6 @@
 clear all; close all; clc;
+warning('off', 'MATLAB:MKDIR:DirectoryExists'); % i know it may exists
+mkdir('.out');
 
 imgs = {'dog.jpg', 'katrina.jpg'};
 K_values = [2, 3, 4]; % valores de K a testar

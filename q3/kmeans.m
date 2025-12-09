@@ -1,4 +1,4 @@
-function [idx, C] = kmeans(X, k, ~, ~)
+function [idx, C] = kmeans(X, k, varargin)
     [n, ~] = size(X);
 
     rp = randperm(n);

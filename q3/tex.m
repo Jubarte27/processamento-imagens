@@ -1,5 +1,5 @@
 mkdir('.out');
 
-imwrite(imread('borboleta.jpg'), '.out/borboleta.png');
-imwrite(imread('raposa.jpg'), '.out/raposa.png');
+imwrite(imread('dog.jpg'), '.out/dog.png');
+imwrite(imread('katrina.jpg'), '.out/katrina.png');
 
