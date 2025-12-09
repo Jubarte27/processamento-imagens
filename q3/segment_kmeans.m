@@ -1,4 +1,5 @@
 function seg = segment_kmeans(img, K)
+    img = im2double(img);
 
     % converter para Lab
     cform = makecform('srgb2lab');
@@ -9,6 +10,7 @@ function seg = segment_kmeans(img, K)
 
     % k-means
     idx = kmeans(X, K, 'MaxIter', 1000);
+    % idx = kmeans(X, K);
 
     % voltar para imagem
     seg = reshape(idx, size(img,1), size(img,2));

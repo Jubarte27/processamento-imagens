@@ -30,7 +30,7 @@ function [rec_img, ratio, psnr_val] = vq_gray(img, B)
 
     K = 256;
 
-    [~, codebook] = kmeans(sample_blocks, K, 'MaxIter',1000);
+    [~, codebook] = kmeans(sample_blocks, K);
 
     D = pdist2(blocks, codebook);
     [~, compressed_idx] = min(D, [], 2);

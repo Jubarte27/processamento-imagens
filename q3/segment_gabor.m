@@ -1,8 +1,6 @@
 function seg = segment_gabor(img, K)
     [H, W, ~] = size(img);
-
     img = im2double(img);
-
     gray = img;
 
     if (ndims(img) == 3)
@@ -14,17 +12,6 @@ function seg = segment_gabor(img, K)
     g = gaborCombinations(wavelengths, orientations, 1, 4);
 
     [gabormag, ~] = gaborFFT(gray, g);
-
-    % phi = (1 + sqrt(5)) / 2;
-    % Smoothing = phi;
-    % numFilters = length(g);
-
-    % for i = 1:numFilters
-    %     filter_g = g(i);
-    %     sigma = 0.5 * filter_g.Wavelength;
-    %     gabormag(:, :, i) = gauss(gabormag(:, :, i), Smoothing * sigma);
-    % end
-
     seg = segkmeans(gabormag, K, H, W);
 end
 
@@ -39,7 +26,8 @@ function Label = segkmeans(magnitudes, K, H, W)
     I = makeFeatureSet(H, W, magnitudes);
     [m, n, ~] = size(I);
     X = reshape(I, m * n, []);
-    Label = kmeans(zscore(X), K, 'MaxIter', 1000, 'Replicates', 1);
+    Label = kmeans(zscore(X), K, 'MaxIter', 1000);
+    % Label = kmeans(zscore(X), K);
     Label = reshape(Label, H, W);
 end
 
@@ -158,63 +146,4 @@ function u = frequencyVector(N)
         u = linspace(-0.5, 0.5 - 1 / N, N);
     end
 
-end
-
-function B = gauss(A, sigma)
-
-    if isscalar(sigma)
-        sigma = [sigma sigma];
-    end
-
-    filterSize = 2 * ceil(2 * sigma) + 1;
-    B = frequencyGaussianFilter(A, sigma, filterSize, 'replicate');
-end
-
-function A = frequencyGaussianFilter(A, sigma, hsize, padding)
-    sizeA = size(A);
-    A = padImage(A, hsize, padding);
-    h = createGaussianKernel(sigma, hsize);
-
-    fftSize = size(A);
-    fftH = fft2(h, fftSize(1), fftSize(2));
-    A_fft = fft2(A);
-
-    A_filtered_fft = bsxfun(@times, A_fft, fftH);
-    A = ifft2(A_filtered_fft, 'symmetric');
-    A = unpadImage(A, sizeA);
-end
-
-function h = createGaussianKernel(sigma, hsize)
-    filterRadius = (hsize - 1) / 2;
-    [X, Y] = meshgrid(-filterRadius(2):filterRadius(2), -filterRadius(1):filterRadius(1));
-    arg = (X .* X) / (sigma(2) * sigma(2)) + (Y .* Y) / (sigma(1) * sigma(1));
-
-    h = exp(-arg / 2);
-    h(h < eps * max(h(:))) = 0;
-    sumH = sum(h(:));
-
-    if sumH ~= 0
-        h = h ./ sumH;
-    end
-
-end
-
-function [A, padSize] = padImage(A, hsize, padding)
-    sizeH = [hsize ones(1, numel(size(A)) - numel(hsize))];
-    padSize = floor(sizeH / 2);
-    A = padarray(A, padSize, padding, 'both');
-end
-
-function A = unpadImage(A, outSize)
-    start = 1 + size(A) - outSize;
-    stop = start + outSize - 1;
-
-    subCrop.type = '()';
-    subCrop.subs = {start(1):stop(1), start(2):stop(2)};
-
-    for dims = 3:ndims(A)
-        subCrop.subs{dims} = start(dims):stop(dims);
-    end
-
-    A = subsref(A, subCrop);
 end

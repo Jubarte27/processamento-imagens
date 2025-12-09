@@ -1,4 +1,5 @@
 function colors = distinguishable_colors(N, avoid_colors)
+
     if N <= 8
         g = 12;
     elseif N <= 16
@@ -23,17 +24,17 @@ function colors = distinguishable_colors(N, avoid_colors)
     active = true(np, 1);
     active(idx0) = false;
 
-    dmin = pdist2(P, colors(1,:));
+    dmin = pdist2(P, colors(1, :));
     dmin(idx0) = Inf;
 
     for k = 2:N
         [~, idx] = max(dmin .* active);
 
-        colors(k,:) = P(idx, :);
+        colors(k, :) = P(idx, :);
         active(idx) = false;
 
-        dnew = pdist2(P, P(idx,:));
+        dnew = pdist2(P, P(idx, :));
         dmin = min(dmin, dnew);
     end
-end
 
+end
