@@ -1,7 +1,26 @@
 clear all; close all; clc;
 
-imgs = {'owl.jpg', 'dog.jpg'};
+imgs = {'dog.jpg', 'owl.jpg'};
 K_values = [2, 3, 4];   % valores de K a testar
+
+total = length(imgs);
+Is = cell(1,total);
+
+for i = 1:total
+    I = imread(imgs{i});
+    seg = segment_gabor(I, 3);
+
+    Is{i} = overlay_labels(I, seg, 0.45);
+end
+
+figure('Name','AAAA','NumberTitle','off', 'Position', get(0, 'Screensize'));
+
+for i = 1:total
+    overlay = Is{i};
+    subplot(1, total, i);
+    imshow(overlay, []);
+end
+
 
 %% ============================
 %  JANELA 1: IMAGENS ORIGINAIS
@@ -92,20 +111,3 @@ K_values = [2, 3, 4];   % valores de K a testar
 %     title(['Gabor K = ' num2str(K)]);
 %     record('raposa_G.jpg', seg, K);
 % end
-total = length(imgs);
-Is = cell(1,total);
-
-parfor i = 1:total
-    I = imread(imgs{i});
-    seg = segment_gabor(I, 2);
-
-    Is{i} = overlay_labels(I, seg, 0.45);
-end
-
-figure('Name','AAAA','NumberTitle','off', 'Position', get(0, 'Screensize'));
-
-for i = 1:total
-    overlay = Is{i};
-    subplot(1, total, i);
-    imshow(overlay, []);
-end

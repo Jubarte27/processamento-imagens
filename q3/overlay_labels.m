@@ -1,30 +1,28 @@
-function overlay_img = overlay_labels(I, labels, alpha)
+function over = overlay_labels(I, labels, alpha)
     I = im2double(I);
-    [H, W] = size(labels);
-
-    % Ensure RGB input
     if size(I,3) == 1
-        I_rgb = repmat(I, [1 1 3]);
-    else
-        I_rgb = I;
+        I = repmat(I, [1 1 3]);
     end
 
-    %% 1. Normalize labels into 1..M
     labs = labels(:);
-    [~,~,new_labs] = unique(labs);
-    new_labs = reshape(new_labs, H, W);
+    [~,~,newLabs] = unique(labs);
+    newLabs = reshape(newLabs, size(labels));
+    K = max(newLabs(:));
 
-    M = max(new_labs);
+    colors = rand(K,3);
 
-    %% 2. Generate distinguishable colors (Mx3)
-    colors = distinguishable_colors(M, [0 0 0]);
+    H = size(labels,1);
+    W = size(labels,2);
+    C = zeros(H, W, 3);
 
-    %% 3. Vectorized color assignment
-    % Convert label map to color image via indexing
-    C = colors(new_labs, :);     % (H*W) x 3
-    C = reshape(C, H, W, 3);     % H x W x 3
+    for k = 1:K
+        mask = (newLabs == k);
+        for c = 1:3
+            ch = C(:,:,c);
+            ch(mask) = colors(k,c);
+            C(:,:,c) = ch;
+        end
+    end
 
-    %% 4. Alpha blend
-    overlay_img = (1 - alpha) * I_rgb + alpha * C;
+    over = (1-alpha)*I + alpha*C;
 end
-

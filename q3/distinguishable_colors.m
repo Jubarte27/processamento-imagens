@@ -1,28 +1,39 @@
 function colors = distinguishable_colors(N, avoid_colors)
-    gridv = linspace(0,1,30);
-    [R,G,B] = ndgrid(gridv,gridv,gridv);
+    if N <= 8
+        g = 12;
+    elseif N <= 16
+        g = 16;
+    else
+        g = 22;
+    end
+
+    gridv = linspace(0, 1, g);
+    [R, G, B] = ndgrid(gridv, gridv, gridv);
     P = [R(:) G(:) B(:)];
 
-    Davoid = pdist2(P, avoid_colors, 'euclidean');
-    mask = all(Davoid > 0.10, 2);
-    P = P(mask,:);
-    np = size(P,1);
+    distance = pdist2(P, avoid_colors);
+    P = P(all(distance > 0.12345, 2), :);
+    distance = pdist2(P, avoid_colors);
+    [~, idx0] = max(min(distance, [], 2));
 
-    D = squareform(pdist(P), 'tomatrix');
+    colors = zeros(N, 3);
+    colors(1, :) = P(idx0, :);
 
-    [~, idx] = max(min(Davoid(mask,:),[],2));
-    colors = P(idx,:);
+    np = size(P, 1);
+    active = true(np, 1);
+    active(idx0) = false;
 
-    active = true(np,1);
-    active(idx) = false;
-
-    dmin = D(:,idx);
+    dmin = pdist2(P, colors(1,:));
+    dmin(idx0) = Inf;
 
     for k = 2:N
-        [~, idx2] = max(dmin .* active);   % ignore selected ones
-        colors(k,:) = P(idx2,:);
-        active(idx2) = false;
+        [~, idx] = max(dmin .* active);
 
-        dmin = min(dmin, D(:,idx2));
+        colors(k,:) = P(idx, :);
+        active(idx) = false;
+
+        dnew = pdist2(P, P(idx,:));
+        dmin = min(dmin, dnew);
     end
 end
+
